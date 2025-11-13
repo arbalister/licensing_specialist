@@ -1,0 +1,14 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "Licensing"]
+	url = https://github.com/arbalister/python.git
+	fetch = +refs/heads/*:refs/remotes/Licensing/*
+[remote "Licensing-Specialist"]
+	url = https://github.com/arbalister/licensing.git
+	fetch = +refs/heads/*:refs/remotes/Licensing-Specialist/*
+[remote "origin"]
+	url = git@github.com:arbalister/licensing.git
+	fetch = +refs/heads/*:refs/remotes/origin/*

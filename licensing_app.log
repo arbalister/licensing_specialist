@@ -1,0 +1,26 @@
+2025-11-12 16:21:01,433 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:23:36,056 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:24:37,932 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:24:57,642 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:37:32,632 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:37:32,691 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 611, in run_app
+    app = App()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 38, in __init__
+    self._build_license_tab()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 449, in _build_license_tab
+    ttk.Button(left, text="Add License", command=self._add_license).pack(pady=6)
+                                                 ^^^^^^^^^^^^^^^^^
+  File "/home/chanlon/.local/share/uv/python/cpython-3.13.7-linux-x86_64-gnu/lib/python3.13/tkinter/__init__.py", line 2552, in __getattr__
+    return getattr(self.tk, attr)
+AttributeError: '_tkinter.tkapp' object has no attribute '_add_license'
+2025-11-12 16:39:39,270 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:43:36,591 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:45:38,971 INFO root - Starting Licensing Specialist GUI
+2025-11-12 16:51:34,541 INFO root - Starting Licensing Specialist GUI
+2025-11-12 17:03:01,265 INFO root - Starting Licensing Specialist GUI

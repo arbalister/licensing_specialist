@@ -1,0 +1,71 @@
+/* Base font and colors */
+* { font-family: "Segoe UI", "Inter", sans-serif; font-size: 11pt; }
+QWidget { background: #1e1f23; color: #e6eef6; }
+
+/* Main window */
+QMainWindow { background: #151519; }
+
+/* Toolbar */
+QToolBar {
+  background: transparent;
+  spacing: 8px;
+  padding: 6px;
+}
+QToolButton { 
+  border: none; 
+  padding: 6px; 
+  border-radius: 6px;
+}
+QToolButton:hover { background: rgba(255,255,255,0.04); }
+
+/* Buttons */
+QPushButton {
+  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #4b9fff, stop:1 #2f7fe8);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+QPushButton:hover { background: #3a8cec; }
+
+/* Secondary (flat) button */
+QPushButton[flat="true"] {
+  background: transparent;
+  color: #cfe7ff;
+  border: none;
+}
+
+/* Status bar */
+QStatusBar { background: transparent; color: #a9b8c9; padding: 4px; }
+
+/* Tree / Table views */
+QTreeWidget, QTableView {
+  background: #121216;
+  alternate-background-color: #17171a;
+  border: 1px solid rgba(255,255,255,0.04);
+  gridline-color: rgba(255,255,255,0.02);
+  selection-background-color: #2f7fe8;
+  selection-color: #ffffff;
+}
+QHeaderView::section {
+  background: #151519;
+  padding: 6px;
+  border: none;
+  color: #bcd6ff;
+  font-weight: 600;
+}
+
+/* Line edits and search */
+QLineEdit {
+  background: #15161a;
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 6px;
+  border-radius: 6px;
+}
+
+/* Dialog backgrounds */
+QDialog { background: #15161a; border-radius: 8px; }
+
+/* Small helper */
+QLabel#smallMuted { color: #95a6b8; font-size: 9pt; }

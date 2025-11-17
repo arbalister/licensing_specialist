@@ -356,6 +356,15 @@ def delete_class(class_id: int, db_path: Optional[Path] = None) -> None:
     conn.close()
 
 
+def update_class(class_id: int, name: str, start_date: Optional[str], end_date: Optional[str], db_path: Optional[Path] = None) -> None:
+    """Update class record fields."""
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("UPDATE class SET name = ?, start_date = ?, end_date = ? WHERE id = ?", (name, start_date, end_date, class_id))
+    conn.commit()
+    conn.close()
+
+
 def add_class(name: str, start_date: Optional[str] = None, end_date: Optional[str] = None,
               db_path: Optional[Path] = None) -> int:
     conn = get_conn(db_path)
@@ -404,6 +413,19 @@ def delete_exam(exam_id: int, db_path: Optional[Path] = None) -> None:
     conn.close()
 
 
+def update_exam(exam_id: int, trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], score: Optional[float], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> None:
+    """Update an exam record with the provided fields."""
+    _ensure_exam_columns(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE exam SET trainee_id = ?, class_id = ?, exam_date = ?, module = ?, is_practice = ?, passed = ?, score = ?, notes = ?, reimbursement_requested = ? WHERE id = ?",
+        (trainee_id, class_id, exam_date, module, int(bool(is_practice)), (1 if passed else (0 if passed is False else None)), score, notes, int(bool(reimbursement_requested)), exam_id),
+    )
+    conn.commit()
+    conn.close()
+
+
 def add_exam_v2(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], score: Optional[float], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> int:
     """Add an exam record with module, practice flag, pass/fail, numeric score, and reimbursement flag."""
     _ensure_exam_columns(db_path)
@@ -427,6 +449,14 @@ def add_license(trainee_id: int, application_submitted_date: Optional[str], appr
     lid = cur.lastrowid
     conn.close()
     return lid
+
+
+def update_license(license_id: int, trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], license_number: Optional[str], status: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> None:
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("UPDATE license SET trainee_id = ?, application_submitted_date = ?, approval_date = ?, license_number = ?, status = ?, notes = ? WHERE id = ?", (trainee_id, application_submitted_date, approval_date, license_number, status, notes, license_id))
+    conn.commit()
+    conn.close()
 
 
 def list_exams(db_path: Optional[Path] = None) -> List[sqlite3.Row]:

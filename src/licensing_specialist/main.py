@@ -29,6 +29,7 @@ def main():
     logging.info("Starting Licensing Specialist GUI")
     try:
         run_app()
+        logging.info("Licensing Specialist GUI exited cleanly")
     except Exception as exc:  # catch unexpected errors and log them
         logging.exception("Unhandled exception in application")
         # Try to show a friendly message to the user using tkinter if possible

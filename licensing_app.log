@@ -55,3 +55,63 @@ _tkinter.TclError: unknown option "-bootstyle"
 2025-11-16 21:12:06,188 INFO root - Starting Licensing Specialist GUI
 2025-11-16 21:38:56,236 INFO root - Starting Licensing Specialist GUI
 2025-11-16 21:54:25,225 INFO root - Starting Licensing Specialist GUI
+2025-11-17 15:51:53,126 INFO root - Starting Licensing Specialist GUI
+2025-11-17 15:51:53,128 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 1080, in run_app
+    app = App()
+          ^^^
+NameError: name 'App' is not defined. Did you mean: 'qApp'?
+2025-11-17 16:31:30,832 INFO root - Starting Licensing Specialist GUI
+2025-11-17 16:31:30,832 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 1080, in run_app
+    app = App()
+          ^^^
+NameError: name 'App' is not defined. Did you mean: 'qApp'?
+2025-11-17 16:39:01,406 INFO root - Starting Licensing Specialist GUI
+2025-11-17 16:43:47,662 INFO root - Starting Licensing Specialist GUI
+2025-11-17 16:45:53,455 INFO root - Starting Licensing Specialist GUI
+2025-11-17 16:47:45,028 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:00:27,325 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:00:59,194 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:52:00,310 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:52:00,312 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 15, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(exc))
+                                                              ^^^
+NameError: name 'exc' is not defined. Did you mean: 'exec'?
+2025-11-17 17:52:31,955 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:52:31,955 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 15, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(exc))
+                                                              ^^^
+NameError: name 'exc' is not defined. Did you mean: 'exec'?
+2025-11-17 17:53:07,992 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:53:07,993 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: cannot import name 'QAction' from 'PySide6.QtWidgets' (/home/chanlon/code_projects/python/licensing_specialist/.venv/lib/python3.13/site-packages/PySide6/QtWidgets.abi3.so)
+2025-11-17 17:53:43,288 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:55:11,419 INFO root - Starting Licensing Specialist GUI
+2025-11-17 17:59:10,154 INFO root - Starting Licensing Specialist GUI
+2025-11-17 18:00:36,456 INFO root - Starting Licensing Specialist GUI
+2025-11-17 18:05:51,543 INFO root - Starting Licensing Specialist GUI

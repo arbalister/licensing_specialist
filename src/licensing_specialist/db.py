@@ -11,6 +11,8 @@ def get_conn(db_path: Optional[Path] = None) -> sqlite3.Connection:
     path = db_path or DEFAULT_DB
     conn = sqlite3.connect(str(path))
     conn.row_factory = sqlite3.Row
+    # Enable foreign key constraints to ensure cascading deletes work
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 

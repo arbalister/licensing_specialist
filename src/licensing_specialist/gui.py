@@ -4,8 +4,14 @@ from typing import Optional
 from . import db
 from datetime import datetime
 
-
 DATE_HELP = "Use YYYY-MM-DD format"
+
+# Color constants for status indicators
+COLOR_PASS = "#2ecc71"  # Green
+COLOR_FAIL = "#e74c3c"  # Red
+COLOR_PENDING = "#f39c12"  # Orange
+COLOR_APPROVED = "#27ae60"  # Dark green
+COLOR_INFO = "#3498db"  # Blue
 
 
 def _safe_get(row, key):
@@ -181,12 +187,16 @@ class App(tk.Tk):
     def __init__(self, db_path: Optional[str] = None):
         super().__init__()
         self.title("Licensing Specialist")
-        self.geometry("800x600")
+        self.geometry("1200x750")
         self.db_path = db_path
         db.init_db()
 
+        # Configure styles
+        self.style = ttk.Style()
+        self._configure_styles()
+
         self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill=tk.BOTH, expand=True)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.recruiter_frame = ttk.Frame(self.notebook)
         self.trainee_frame = ttk.Frame(self.notebook)
@@ -194,11 +204,11 @@ class App(tk.Tk):
         self.exam_frame = ttk.Frame(self.notebook)
         self.license_frame = ttk.Frame(self.notebook)
 
-        self.notebook.add(self.recruiter_frame, text="Recruiters")
-        self.notebook.add(self.trainee_frame, text="Trainees")
-        self.notebook.add(self.class_frame, text="Classes")
-        self.notebook.add(self.exam_frame, text="Exams")
-        self.notebook.add(self.license_frame, text="Licenses")
+        self.notebook.add(self.recruiter_frame, text="👤 Recruiters")
+        self.notebook.add(self.trainee_frame, text="👥 Trainees")
+        self.notebook.add(self.class_frame, text="📚 Classes")
+        self.notebook.add(self.exam_frame, text="✍️  Exams")
+        self.notebook.add(self.license_frame, text="📋 Licenses")
 
         self._build_recruiter_tab()
         self._build_trainee_tab()
@@ -206,14 +216,32 @@ class App(tk.Tk):
         self._build_exam_tab()
         self._build_license_tab()
 
+    def _configure_styles(self):
+        """Configure custom styles for better appearance."""
+        # Status label styles
+        self.style.configure("Pass.TLabel", foreground=COLOR_PASS, font=("TkDefaultFont", 9, "bold"))
+        self.style.configure("Fail.TLabel", foreground=COLOR_FAIL, font=("TkDefaultFont", 9, "bold"))
+        self.style.configure("Pending.TLabel", foreground=COLOR_PENDING, font=("TkDefaultFont", 9, "bold"))
+        self.style.configure("Approved.TLabel", foreground=COLOR_APPROVED, font=("TkDefaultFont", 9, "bold"))
+        self.style.configure("Info.TLabel", foreground=COLOR_INFO, font=("TkDefaultFont", 8))
+        self.style.configure("Section.TLabel", font=("TkDefaultFont", 10, "bold"))
+
     def _build_recruiter_tab(self):
         frm = self.recruiter_frame
         left = ttk.Frame(frm)
-        left.pack(side=tk.LEFT, fill=tk.Y, padx=8, pady=8)
+        left.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
 
-        ttk.Label(left, text="Name").pack()
-        self.rec_name = ttk.Entry(left)
-        self.rec_name.pack()
+        # Title
+        ttk.Label(left, text="Add / Edit Recruiter", style="Section.TLabel").pack(anchor=tk.W, pady=(0, 10))
+
+        # Use grid for better alignment
+        form_frame = ttk.Frame(left)
+        form_frame.pack(fill=tk.X, pady=5)
+        
+        row = 0
+        ttk.Label(form_frame, text="Name").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.rec_name = ttk.Entry(form_frame, width=25)
+        self.rec_name.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
         # search/populate when user types an existing name
         self.rec_name.bind('<FocusOut>', lambda e: self._on_rec_name_search())
         self.rec_name.bind('<Return>', lambda e: self._on_rec_name_search())
@@ -223,15 +251,21 @@ class App(tk.Tk):
             lambda p: [(f"{r['name']} ({r['email'] or ''})", r) for r in db.search_recruiters_by_name(p)],
             lambda row: self._populate_recruiter_fields(row),
         )
-        ttk.Label(left, text="Email").pack()
-        self.rec_email = ttk.Entry(left)
-        self.rec_email.pack()
-        ttk.Label(left, text="Phone").pack()
-        self.rec_phone = ttk.Entry(left)
-        self.rec_phone.pack()
-        ttk.Label(left, text="Rep code (5 alnum)").pack()
-        self.rec_rep = ttk.Entry(left)
-        self.rec_rep.pack()
+        
+        row += 1
+        ttk.Label(form_frame, text="Email").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.rec_email = ttk.Entry(form_frame, width=25)
+        self.rec_email.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
+        
+        row += 1
+        ttk.Label(form_frame, text="Phone").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.rec_phone = ttk.Entry(form_frame, width=25)
+        self.rec_phone.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
+        
+        row += 1
+        ttk.Label(form_frame, text="Rep code (5 alnum)").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.rec_rep = ttk.Entry(form_frame, width=25)
+        self.rec_rep.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
         self.rec_rep.bind('<FocusOut>', lambda e: self._on_rec_rep_search())
         self.rec_rep.bind('<Return>', lambda e: self._on_rec_rep_search())
         # live autocomplete for rep code
@@ -240,28 +274,35 @@ class App(tk.Tk):
             lambda p: [(f"{_safe_get(r,'rep_code') or ''} - {_safe_get(r,'name') or ''}", r) for r in db.search_recruiters_by_rep(p)],
             lambda row: self._populate_recruiter_fields(row),
         )
-        ttk.Button(left, text="Add Recruiter", command=self._add_recruiter).pack(pady=6)
+        
+        form_frame.columnconfigure(1, weight=1)
+        
+        # Buttons
+        btn_frame = ttk.Frame(left)
+        btn_frame.pack(fill=tk.X, pady=10)
+        ttk.Button(btn_frame, text="➕ Add Recruiter", command=self._add_recruiter).pack(fill=tk.X, pady=3)
 
         right = ttk.Frame(frm)
-        right.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        right.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
         top = ttk.Frame(right)
-        top.pack(fill=tk.X)
-        ttk.Label(top, text="Recruiters").pack(side=tk.LEFT)
-        ttk.Button(top, text="Edit", command=self._edit_selected_recruiter).pack(side=tk.RIGHT)
+        top.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(top, text="Recruiters", style="Section.TLabel").pack(side=tk.LEFT)
+        ttk.Button(top, text="✏️ Edit", command=self._edit_selected_recruiter, width=8).pack(side=tk.RIGHT, padx=3)
 
         self.recruiter_list = tk.Listbox(right, height=8)
-        self.recruiter_list.pack(fill=tk.X)
+        self.recruiter_list.pack(fill=tk.X, pady=(0, 10))
         self.recruiter_list.bind('<<ListboxSelect>>', self._on_recruiter_select)
         self._refresh_recruiters()
 
         # details area to show connected info for selected recruiter using a Treeview
         ttk.Separator(right).pack(fill=tk.X, pady=6)
-        ttk.Label(right, text="Details").pack()
+        ttk.Label(right, text="Details", style="Section.TLabel").pack()
         details_box = ttk.Frame(right)
         details_box.pack(fill=tk.BOTH, expand=True)
 
         # Use a Treeview with a dedicated 'Details' column for clearer layout
-        self.recruiter_tree = ttk.Treeview(details_box, columns=("details",), show="tree headings")
+        self.recruiter_tree = ttk.Treeview(details_box, columns=("details",), show="tree headings", height=10)
         self.recruiter_tree.heading("details", text="Details")
         self.recruiter_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tree_sb = ttk.Scrollbar(details_box, orient=tk.VERTICAL, command=self.recruiter_tree.yview)
@@ -416,13 +457,14 @@ class App(tk.Tk):
                 cur.execute("SELECT * FROM exam WHERE trainee_id = ? ORDER BY exam_date DESC", (t['id'],))
                 exams = cur.fetchall()
                 if exams:
-                    exams_parent = self.recruiter_tree.insert(tnode, 'end', text="Exams", open=False)
+                    exams_parent = self.recruiter_tree.insert(tnode, 'end', text="📝 Exams", open=False)
                     for e in exams:
                         mod = f"[{e['module']}] " if 'module' in e.keys() and e['module'] else ''
                         practice = "(practice) " if 'is_practice' in e.keys() and e['is_practice'] else ''
                         passed = 'Pass' if ('passed' in e.keys() and e['passed'] == 1) else ('Fail' if ('passed' in e.keys() and e['passed'] == 0) else '—')
                         reimb = ' [Reimb requested]' if ('reimbursement_requested' in e.keys() and e['reimbursement_requested']) else ''
-                        self.recruiter_tree.insert(exams_parent, 'end', text=f"{e['id']}: {e['exam_date'] or '—'} | {mod}{practice}Score: {e['score'] or '—'} | {passed}{reimb}")
+                        status_icon = "✅" if passed == "Pass" else ("❌" if passed == "Fail" else "❓")
+                        self.recruiter_tree.insert(exams_parent, 'end', text=f"{e['id']}: {e['exam_date'] or '—'} | {mod}{practice}Score: {e['score'] or '—'} | {status_icon} {passed}{reimb}")
 
                 # licenses
                 cur.execute("SELECT * FROM license WHERE trainee_id = ? ORDER BY application_submitted_date DESC", (t['id'],))
@@ -603,11 +645,19 @@ class App(tk.Tk):
     def _build_trainee_tab(self):
         frm = self.trainee_frame
         left = ttk.Frame(frm)
-        left.pack(side=tk.LEFT, fill=tk.Y, padx=8, pady=8)
+        left.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
 
-        ttk.Label(left, text="First name").pack()
-        self.tr_first = ttk.Entry(left)
-        self.tr_first.pack()
+        # Title
+        ttk.Label(left, text="Add / Edit Trainee", style="Section.TLabel").pack(anchor=tk.W, pady=(0, 10))
+
+        # Use grid for better alignment
+        form_frame = ttk.Frame(left)
+        form_frame.pack(fill=tk.X, pady=5)
+        
+        row = 0
+        ttk.Label(form_frame, text="First name").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.tr_first = ttk.Entry(form_frame, width=25)
+        self.tr_first.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
         # populate when existing trainee name typed
         self.tr_first.bind('<FocusOut>', lambda e: self._on_tr_name_search())
         self.tr_first.bind('<Return>', lambda e: self._on_tr_name_search())
@@ -617,9 +667,11 @@ class App(tk.Tk):
             lambda p: [(f"{t['first_name']} {t['last_name']}", t) for t in db.search_trainees_by_name(p)],
             lambda row: self._populate_trainee_fields(row),
         )
-        ttk.Label(left, text="Last name").pack()
-        self.tr_last = ttk.Entry(left)
-        self.tr_last.pack()
+        
+        row += 1
+        ttk.Label(form_frame, text="Last name").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.tr_last = ttk.Entry(form_frame, width=25)
+        self.tr_last.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
         self.tr_last.bind('<FocusOut>', lambda e: self._on_tr_name_search())
         self.tr_last.bind('<Return>', lambda e: self._on_tr_name_search())
         self.tr_last_ac = Autocomplete(
@@ -627,12 +679,16 @@ class App(tk.Tk):
             lambda p: [(f"{t['first_name']} {t['last_name']}", t) for t in db.search_trainees_by_name(p)],
             lambda row: self._populate_trainee_fields(row),
         )
-        ttk.Label(left, text="DOB (YYYY-MM-DD)").pack()
-        self.tr_dob = ttk.Entry(left)
-        self.tr_dob.pack()
-        ttk.Label(left, text="Rep code (5 alnum)").pack()
-        self.tr_rep = ttk.Entry(left)
-        self.tr_rep.pack()
+        
+        row += 1
+        ttk.Label(form_frame, text="DOB (YYYY-MM-DD)").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.tr_dob = ttk.Entry(form_frame, width=25)
+        self.tr_dob.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
+        
+        row += 1
+        ttk.Label(form_frame, text="Rep code (5 alnum)").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.tr_rep = ttk.Entry(form_frame, width=25)
+        self.tr_rep.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
         self.tr_rep.bind('<FocusOut>', lambda e: self._on_tr_rep_search())
         self.tr_rep.bind('<Return>', lambda e: self._on_tr_rep_search())
         self.tr_rep_ac = Autocomplete(
@@ -640,31 +696,40 @@ class App(tk.Tk):
             lambda p: [(f"{_safe_get(t,'rep_code') or ''} - {_safe_get(t,'first_name') or ''} {_safe_get(t,'last_name') or ''}", t) for t in db.search_trainees_by_rep(p)],
             lambda row: self._populate_trainee_fields(row),
         )
-        ttk.Label(left, text="Recruiter").pack()
+        
+        row += 1
+        ttk.Label(form_frame, text="Recruiter").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.rec_var = tk.StringVar()
-        self.rec_dropdown = ttk.Combobox(left, textvariable=self.rec_var)
-        self.rec_dropdown.pack()
-        ttk.Button(left, text="Add Trainee", command=self._add_trainee).pack(pady=6)
+        self.rec_dropdown = ttk.Combobox(form_frame, textvariable=self.rec_var, width=22)
+        self.rec_dropdown.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
+        
+        form_frame.columnconfigure(1, weight=1)
+        
+        # Buttons
+        btn_frame = ttk.Frame(left)
+        btn_frame.pack(fill=tk.X, pady=10)
+        ttk.Button(btn_frame, text="➕ Add Trainee", command=self._add_trainee).pack(fill=tk.X, pady=3)
 
         right = ttk.Frame(frm)
-        right.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        right.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
         top = ttk.Frame(right)
-        top.pack(fill=tk.X)
-        ttk.Label(top, text="Trainees").pack(side=tk.LEFT)
-        ttk.Button(top, text="Edit Trainee", command=self._edit_selected_trainee).pack(side=tk.RIGHT)
+        top.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(top, text="Trainees", style="Section.TLabel").pack(side=tk.LEFT)
+        ttk.Button(top, text="✏️ Edit", command=self._edit_selected_trainee, width=8).pack(side=tk.RIGHT, padx=3)
 
         self.trainee_list = tk.Listbox(right, height=8)
-        self.trainee_list.pack(fill=tk.X)
+        self.trainee_list.pack(fill=tk.X, pady=(0, 10))
         self.trainee_list.bind('<<ListboxSelect>>', self._on_trainee_select)
         self._refresh_recruiter_dropdowns()
         self._refresh_trainees()
 
         # details view for trainee
         ttk.Separator(right).pack(fill=tk.X, pady=6)
-        ttk.Label(right, text="Details").pack()
+        ttk.Label(right, text="Details", style="Section.TLabel").pack()
         tbox = ttk.Frame(right)
         tbox.pack(fill=tk.BOTH, expand=True)
-        self.trainee_tree = ttk.Treeview(tbox, columns=("details",), show="tree headings")
+        self.trainee_tree = ttk.Treeview(tbox, columns=("details",), show="tree headings", height=10)
         self.trainee_tree.heading("details", text="Details")
         self.trainee_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         t_sb = ttk.Scrollbar(tbox, orient=tk.VERTICAL, command=self.trainee_tree.yview)
@@ -838,51 +903,74 @@ class App(tk.Tk):
     def _build_exam_tab(self):
         frm = self.exam_frame
         left = ttk.Frame(frm)
-        left.pack(side=tk.LEFT, fill=tk.Y, padx=8, pady=8)
+        left.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
 
-        ttk.Label(left, text="Trainee").pack()
+        # Title
+        ttk.Label(left, text="Add Exam", style="Section.TLabel").pack(anchor=tk.W, pady=(0, 10))
+
+        # Use grid for better alignment
+        form_frame = ttk.Frame(left)
+        form_frame.pack(fill=tk.X, pady=5)
+        
+        row = 0
+        ttk.Label(form_frame, text="Trainee").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.exam_trainee_var = tk.StringVar()
-        self.exam_trainee = ttk.Combobox(left, textvariable=self.exam_trainee_var)
-        self.exam_trainee.pack()
-        ttk.Label(left, text="Class (optional)").pack()
+        self.exam_trainee = ttk.Combobox(form_frame, textvariable=self.exam_trainee_var, width=22)
+        self.exam_trainee.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
+        
+        row += 1
+        ttk.Label(form_frame, text="Class (optional)").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.exam_class_var = tk.StringVar()
-        self.exam_class = ttk.Combobox(left, textvariable=self.exam_class_var)
-        self.exam_class.pack()
-        ttk.Label(left, text="Module").pack()
+        self.exam_class = ttk.Combobox(form_frame, textvariable=self.exam_class_var, width=22)
+        self.exam_class.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
+        
+        row += 1
+        ttk.Label(form_frame, text="Module").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.exam_module = tk.StringVar()
-        self.exam_module_cb = ttk.Combobox(left, textvariable=self.exam_module)
+        self.exam_module_cb = ttk.Combobox(form_frame, textvariable=self.exam_module, width=22)
         self.exam_module_cb['values'] = ["Life", "A&S", "Seg Funds", "Ethics"]
-        self.exam_module_cb.pack()
+        self.exam_module_cb.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
 
+        row += 1
         self.is_practice_var = tk.IntVar(value=0)
-        ttk.Checkbutton(left, text="Practice exam", variable=self.is_practice_var).pack()
+        ttk.Checkbutton(form_frame, text="Practice exam", variable=self.is_practice_var).grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=5, pady=5)
 
-        ttk.Label(left, text="Exam date (YYYY-MM-DD)").pack()
-        self.exam_date = ttk.Entry(left)
-        self.exam_date.pack()
+        row += 1
+        ttk.Label(form_frame, text="Exam date (YYYY-MM-DD)").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.exam_date = ttk.Entry(form_frame, width=22)
+        self.exam_date.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
 
-        ttk.Label(left, text="Score (numeric)").pack()
-        self.exam_score = ttk.Entry(left)
-        self.exam_score.pack()
+        row += 1
+        ttk.Label(form_frame, text="Score (numeric)").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.exam_score = ttk.Entry(form_frame, width=22)
+        self.exam_score.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
 
-        ttk.Label(left, text="Result").pack()
+        row += 1
+        ttk.Label(form_frame, text="Result").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.exam_result = tk.StringVar()
-        self.exam_result_cb = ttk.Combobox(left, textvariable=self.exam_result)
+        self.exam_result_cb = ttk.Combobox(form_frame, textvariable=self.exam_result, width=22)
         self.exam_result_cb['values'] = ["Unknown", "Pass", "Fail"]
         self.exam_result_cb.set("Unknown")
-        self.exam_result_cb.pack()
+        self.exam_result_cb.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
 
-        ttk.Label(left, text="Notes").pack()
-        self.exam_notes = tk.Text(left, height=4, width=30)
-        self.exam_notes.pack()
-        ttk.Button(left, text="Add Exam", command=self._add_exam).pack(pady=6)
+        row += 1
+        ttk.Label(form_frame, text="Notes").grid(row=row, column=0, sticky=tk.NW, padx=5, pady=5)
+        self.exam_notes = tk.Text(form_frame, height=4, width=25)
+        self.exam_notes.grid(row=row, column=1, sticky=tk.EW, padx=5, pady=5)
+        
+        form_frame.columnconfigure(1, weight=1)
+        
+        # Buttons
+        btn_frame = ttk.Frame(left)
+        btn_frame.pack(fill=tk.X, pady=10)
+        ttk.Button(btn_frame, text="➕ Add Exam", command=self._add_exam).pack(fill=tk.X, pady=3)
 
         right = ttk.Frame(frm)
-        right.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
-        ttk.Label(right, text="Exams").pack()
+        right.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        ttk.Label(right, text="Exams", style="Section.TLabel").pack()
         self.exam_list = tk.Listbox(right)
         self.exam_list.pack(fill=tk.BOTH, expand=True)
-        ttk.Button(right, text="Delete Exam", command=self._delete_selected_exam).pack(pady=4)
+        ttk.Button(right, text="🗑️  Delete Exam", command=self._delete_selected_exam).pack(pady=4, fill=tk.X)
         self._refresh_exam_dropdowns()
         self._refresh_exams()
 
@@ -951,8 +1039,9 @@ class App(tk.Tk):
             mod = f"[{e['module']}] " if 'module' in e.keys() and e['module'] else ''
             practice = "(practice) " if 'is_practice' in e.keys() and e['is_practice'] else ''
             passed = 'Pass' if ('passed' in e.keys() and e['passed'] == 1) else ('Fail' if ('passed' in e.keys() and e['passed'] == 0) else '—')
-            reimb = ' [Reimb requested]' if ('reimbursement_requested' in e.keys() and e['reimbursement_requested']) else ''
-            self.exam_list.insert(tk.END, f"{e['id']}: {e['exam_date'] or '—'} - {mod}{practice}{e['first_name']} {e['last_name']} - {passed}{reimb}")
+            status_icon = "✅" if passed == "Pass" else ("❌" if passed == "Fail" else "❓")
+            reimb = ' 💰' if ('reimbursement_requested' in e.keys() and e['reimbursement_requested']) else ''
+            self.exam_list.insert(tk.END, f"{e['id']}: {e['exam_date'] or '—'} | {mod}{practice}{e['first_name']} {e['last_name']} | {status_icon} {passed}{reimb}")
 
     def _delete_selected_exam(self):
         sel = self.exam_list.curselection()
@@ -1032,7 +1121,9 @@ class App(tk.Tk):
     def _refresh_licenses(self):
         self.lic_list.delete(0, tk.END)
         for l in db.list_licenses():
-            self.lic_list.insert(tk.END, f"{l['id']}: {l['application_submitted_date'] or '—'} - {l['first_name']} {l['last_name']} - {l['status'] or '—'}")
+            status = l['status'] or '—'
+            status_icon = "📋" if status == "Applied" else ("✅" if status == "Approved" else "❓")
+            self.lic_list.insert(tk.END, f"{l['id']}: {l['application_submitted_date'] or '—'} | {l['first_name']} {l['last_name']} | {status_icon} {status}")
 
 
 class EditRecruiterDialog:

@@ -24,3 +24,4 @@ AttributeError: '_tkinter.tkapp' object has no attribute '_add_license'
 2025-11-12 16:45:38,971 INFO root - Starting Licensing Specialist GUI
 2025-11-12 16:51:34,541 INFO root - Starting Licensing Specialist GUI
 2025-11-12 17:03:01,265 INFO root - Starting Licensing Specialist GUI
+2025-11-17 15:12:02,815 INFO root - Starting Licensing Specialist GUI

@@ -24,4 +24,34 @@ AttributeError: '_tkinter.tkapp' object has no attribute '_add_license'
 2025-11-12 16:45:38,971 INFO root - Starting Licensing Specialist GUI
 2025-11-12 16:51:34,541 INFO root - Starting Licensing Specialist GUI
 2025-11-12 17:03:01,265 INFO root - Starting Licensing Specialist GUI
-2025-11-17 15:12:02,815 INFO root - Starting Licensing Specialist GUI
+2025-11-13 13:42:25,978 INFO root - Starting Licensing Specialist GUI
+2025-11-13 13:50:23,759 INFO root - Starting Licensing Specialist GUI
+2025-11-13 14:22:35,111 INFO root - Starting Licensing Specialist GUI
+2025-11-13 14:50:13,600 INFO root - Starting Licensing Specialist GUI
+2025-11-13 14:53:17,746 INFO root - Starting Licensing Specialist GUI
+2025-11-16 20:52:16,175 INFO root - Starting Licensing Specialist GUI
+2025-11-16 21:05:47,262 INFO root - Starting Licensing Specialist GUI
+2025-11-16 21:05:47,518 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chris/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+  File "/home/chris/python/licensing_specialist/src/licensing_specialist/gui.py", line 1375, in run_app
+    app = App()
+          ^^^^^
+  File "/home/chris/python/licensing_specialist/src/licensing_specialist/gui.py", line 213, in __init__
+    self._build_recruiter_tab()
+  File "/home/chris/python/licensing_specialist/src/licensing_specialist/gui.py", line 283, in _build_recruiter_tab
+    ttk.Button(btn_frame, text="➕ Add Recruiter", command=self._add_recruiter, bootstyle="success").pack(fill=tk.X, pady=3)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/tkinter/ttk.py", line 582, in __init__
+    Widget.__init__(self, master, "ttk::button", kw)
+  File "/usr/lib/python3.12/tkinter/ttk.py", line 527, in __init__
+    tkinter.Widget.__init__(self, master, widgetname, kw=kw)
+  File "/usr/lib/python3.12/tkinter/__init__.py", line 2648, in __init__
+    self.tk.call(
+_tkinter.TclError: unknown option "-bootstyle"
+2025-11-16 21:08:51,683 INFO root - Starting Licensing Specialist GUI
+2025-11-16 21:09:16,876 INFO root - Starting Licensing Specialist GUI
+2025-11-16 21:12:06,188 INFO root - Starting Licensing Specialist GUI
+2025-11-16 21:38:56,236 INFO root - Starting Licensing Specialist GUI
+2025-11-16 21:54:25,225 INFO root - Starting Licensing Specialist GUI

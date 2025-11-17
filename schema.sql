@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS recruiter (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT,
-    phone TEXT
+    phone TEXT,
+    rep_code TEXT
 );
 
 CREATE TABLE IF NOT EXISTS trainee (
@@ -13,6 +14,7 @@ CREATE TABLE IF NOT EXISTS trainee (
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     dob TEXT,
+    rep_code TEXT,
     recruiter_id INTEGER,
     FOREIGN KEY(recruiter_id) REFERENCES recruiter(id) ON DELETE SET NULL
 );

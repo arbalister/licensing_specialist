@@ -79,6 +79,8 @@ CREATE TABLE IF NOT EXISTS license (
     )
     # Ensure rep_code columns exist on existing DBs
     _ensure_rep_code_columns(db_path)
+    # Ensure practice exam status table exists
+    _ensure_practice_status_table(db_path)
     conn.commit()
     conn.close()
 
@@ -116,6 +118,26 @@ def _ensure_rep_code_columns(db_path: Optional[Path] = None) -> None:
     cols = {r['name'] for r in cur.fetchall()}
     if 'rep_code' not in cols:
         cur.execute("ALTER TABLE trainee ADD COLUMN rep_code TEXT")
+    conn.commit()
+    conn.close()
+
+
+def _ensure_practice_status_table(db_path: Optional[Path] = None) -> None:
+    """Ensure a simple table exists to persist practice exam completion status per module.
+
+    Table schema:
+        practice_exam_status(module TEXT PRIMARY KEY, completed INTEGER DEFAULT 0)
+    """
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        """
+CREATE TABLE IF NOT EXISTS practice_exam_status (
+    module TEXT PRIMARY KEY,
+    completed INTEGER DEFAULT 0
+);
+        """
+    )
     conn.commit()
     conn.close()
 
@@ -403,6 +425,53 @@ def add_exam(trainee_id: int, class_id: Optional[int], exam_date: Optional[str],
     eid = cur.lastrowid
     conn.close()
     return eid
+
+
+def update_practice_exam_status(module: str, completed: bool, db_path: Optional[Path] = None) -> None:
+    """Set the completion flag for a practice exam module (insert or replace)."""
+    _ensure_practice_status_table(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("INSERT OR REPLACE INTO practice_exam_status (module, completed) VALUES (?, ?)", (module, int(bool(completed))))
+    conn.commit()
+    conn.close()
+
+
+def get_practice_exam_status(module: str, db_path: Optional[Path] = None) -> bool:
+    """Return True if the module is marked complete in the practice_exam_status table."""
+    _ensure_practice_status_table(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT completed FROM practice_exam_status WHERE module = ?", (module,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return False
+    try:
+        return bool(row['completed'])
+    except Exception:
+        return bool(row[0])
+
+
+def list_practice_exam_status(db_path: Optional[Path] = None) -> dict:
+    """Return a mapping module -> bool for all stored practice exam statuses."""
+    _ensure_practice_status_table(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT module, completed FROM practice_exam_status")
+    rows = cur.fetchall()
+    conn.close()
+    return {r['module']: bool(r['completed']) for r in rows}
+
+
+def reset_practice_exam_statuses(db_path: Optional[Path] = None) -> None:
+    """Reset all practice exam statuses to incomplete (0)."""
+    _ensure_practice_status_table(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute("UPDATE practice_exam_status SET completed = 0")
+    conn.commit()
+    conn.close()
 
 
 def delete_exam(exam_id: int, db_path: Optional[Path] = None) -> None:

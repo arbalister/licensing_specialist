@@ -120,3 +120,75 @@ RuntimeError: PySide6 GUI is not available: cannot import name 'QAction' from 'P
 2025-11-17 18:40:56,651 INFO root - Starting Licensing Specialist GUI
 2025-11-17 18:43:47,522 INFO root - Starting Licensing Specialist GUI
 2025-11-17 18:44:49,333 INFO root - Starting Licensing Specialist GUI
+2025-11-18 14:27:05,175 INFO root - Starting Licensing Specialist GUI
+2025-11-18 14:36:41,774 INFO root - Starting Licensing Specialist GUI
+2025-11-18 14:40:31,448 INFO root - Starting Licensing Specialist GUI
+2025-11-18 14:42:23,545 INFO root - Starting Licensing Specialist GUI
+2025-11-18 14:53:35,524 INFO root - Starting Licensing Specialist GUI
+2025-11-18 14:53:35,525 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: unterminated string literal (detected at line 1046) (pyside_gui.py, line 1046)
+2025-11-18 15:25:16,410 INFO root - Starting Licensing Specialist GUI
+2025-11-18 15:28:46,944 INFO root - Starting Licensing Specialist GUI
+2025-11-18 15:54:21,662 INFO root - Starting Licensing Specialist GUI
+2025-11-18 15:57:06,167 INFO root - Starting Licensing Specialist GUI
+2025-11-18 15:58:19,861 INFO root - Starting Licensing Specialist GUI
+2025-11-18 15:59:17,124 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:31:30,239 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:33:13,343 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:35:44,047 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:35:44,047 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: expected an indented block after 'except' statement on line 151 (pyside_gui.py, line 154)
+2025-11-18 16:37:39,409 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:37:39,563 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 1379, in run_pyside_app
+    w = MainWindow()
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 106, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 159, in _build
+    right.addWidget(QLabel("Provincial Exam Data for Selected Trainee"))
+    ^^^^^
+NameError: name 'right' is not defined
+2025-11-18 16:38:34,678 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:42:28,259 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:42:28,409 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 1373, in run_pyside_app
+    w = MainWindow()
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 106, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 166, in _build
+    self._update_prov_exam_info()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/chrish/Python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 177, in _update_prov_exam_info
+    mod = e.get('module') or ''
+          ^^^^^
+AttributeError: 'sqlite3.Row' object has no attribute 'get'
+2025-11-18 16:44:06,583 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:52:33,990 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:54:26,328 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:54:54,473 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:55:26,038 INFO root - Starting Licensing Specialist GUI
+2025-11-18 16:56:19,080 INFO root - Starting Licensing Specialist GUI
+2025-11-18 17:07:02,575 INFO root - Starting Licensing Specialist GUI
+2025-11-18 17:07:23,315 INFO root - Starting Licensing Specialist GUI

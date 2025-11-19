@@ -29,7 +29,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
 )
 from PySide6.QtCore import Qt, QStringListModel
-from PySide6.QtGui import QKeySequence, QShortcut, QIcon, QAction
+from PySide6.QtGui import QKeySequence, QShortcut, QIcon, QAction, QColor, QBrush
 import pathlib
 
 from . import db
@@ -180,6 +180,8 @@ class MainWindow(QMainWindow):
             notes = e['notes'] if 'notes' in e.keys() and e['notes'] is not None else ''
             date = e['exam_date'] if 'exam_date' in e.keys() and e['exam_date'] is not None else ''
             QTreeWidgetItem(self.prov_exam_info, [str(date), str(mod), str(score), result, notes])
+        # Update practice exam panel for the current trainee
+        self._update_practice_exam_panel()
         # keyboard shortcuts (global, act based on current tab)
         self._sc_new = QShortcut(QKeySequence("Ctrl+N"), self)
         self._sc_new.activated.connect(self._global_add)
@@ -330,10 +332,18 @@ class MainWindow(QMainWindow):
         if trainees:
             tp = QTreeWidgetItem(root, ["Trainees"])
             for t in trainees:
-                tn = QTreeWidgetItem(tp, [f"{t['id']}: {t['last_name']}, {t['first_name']} (DOB: {t['dob'] or '—'})"])
+                tn = QTreeWidgetItem(tp, [f"{t['id']}: {t['last_name']}, {t['first_name']} (IBA Date: {t['dob'] or '—'})"])
                 try:
-                    complete = db.practice_exams_complete(t['id'])
-                    QTreeWidgetItem(tn, [f"Practice Exams Complete: {'Y' if complete else 'N'}"])
+                    modules_complete = db.all_practice_modules_marked_complete(t['id'])
+                    # Get first provincial exam date
+                    cur2 = db.get_conn().cursor()
+                    cur2.execute("SELECT MIN(exam_date) as first_date FROM exam WHERE trainee_id = ? AND is_practice = 0", (t['id'],))
+                    first_exam_row = cur2.fetchone()
+                    first_exam_date = first_exam_row['first_date'] if first_exam_row else None
+                    seewhy = db.check_seewhy_guarantee(t['id'], first_exam_date) if first_exam_date else False
+                    status_item = QTreeWidgetItem(tn, [f"Practice Exams: {'Y' if modules_complete else 'N'} | SeeWhy Guarantee: {'Y' if seewhy else 'N'}"])
+                    if seewhy:
+                        status_item.setForeground(0, QBrush(QColor("green")))
                 except Exception:
                     pass
 
@@ -493,7 +503,7 @@ class MainWindow(QMainWindow):
         left.addWidget(self.tr_first)
         left.addWidget(QLabel("Last name"))
         left.addWidget(self.tr_last)
-        left.addWidget(QLabel("DOB (YYYY-MM-DD)"))
+        left.addWidget(QLabel("IBA Date (YYYY-MM-DD)"))
         left.addWidget(self.tr_dob)
         left.addWidget(QLabel("Rep code (5 alnum)"))
         left.addWidget(self.tr_rep)
@@ -639,7 +649,7 @@ class MainWindow(QMainWindow):
                     break
         form.addRow("First name", first)
         form.addRow("Last name", last)
-        form.addRow("DOB", dob)
+        form.addRow("IBA Date", dob)
         form.addRow("Rep code", rep)
         form.addRow("Recruiter", rec_combo)
         btns = QHBoxLayout()
@@ -743,10 +753,20 @@ class MainWindow(QMainWindow):
             return
         root = QTreeWidgetItem([f"Trainee: {t['first_name']} {t['last_name']} (ID: {t['id']})"])
         if t['dob']:
-            QTreeWidgetItem(root, [f"DOB: {t['dob']}"])
+            QTreeWidgetItem(root, [f"IBA Date: {t['dob']}"])
         try:
-            complete = db.practice_exams_complete(t['id'])
-            QTreeWidgetItem(root, [f"Practice Exams Complete: {'Y' if complete else 'N'}"])
+            modules_complete = db.all_practice_modules_marked_complete(t['id'])
+            # Get first provincial exam date
+            conn2 = db.get_conn()
+            cur2 = conn2.cursor()
+            cur2.execute("SELECT MIN(exam_date) as first_date FROM exam WHERE trainee_id = ? AND is_practice = 0", (t['id'],))
+            first_exam_row = cur2.fetchone()
+            conn2.close()
+            first_exam_date = first_exam_row['first_date'] if first_exam_row else None
+            seewhy = db.check_seewhy_guarantee(t['id'], first_exam_date) if first_exam_date else False
+            status_item = QTreeWidgetItem(root, [f"Practice Exams: {'Y' if modules_complete else 'N'} | SeeWhy Guarantee: {'Y' if seewhy else 'N'}"])
+            if seewhy:
+                status_item.setForeground(0, QBrush(QColor("green")))
         except Exception:
             pass
         if t['recruiter_id']:
@@ -911,7 +931,7 @@ class MainWindow(QMainWindow):
         if trainees:
             tp = QTreeWidgetItem(root, ["Trainees"]) 
             for t in trainees:
-                tn = QTreeWidgetItem(tp, [f"{t['id']}: {t['last_name']}, {t['first_name']} (DOB: {t['dob'] or '—'})"])
+                tn = QTreeWidgetItem(tp, [f"{t['id']}: {t['last_name']}, {t['first_name']} (IBA Date: {t['dob'] or '—'})"])
                 cur.execute("SELECT * FROM exam WHERE trainee_id = ? ORDER BY exam_date DESC", (t['id'],))
                 exams = cur.fetchall()
                 if exams:
@@ -975,7 +995,6 @@ class MainWindow(QMainWindow):
         self.exam_module.addItems(["", "Life", "A&S", "Seg Funds", "Ethics"])
         self.is_practice = QCheckBox("Practice exam")
         self.exam_date = QLineEdit()
-        self.exam_score = QLineEdit()
         self.exam_result = QComboBox()
         self.exam_result.addItems(["Unknown", "Pass", "Fail"])
         self.exam_notes = QTextEdit()
@@ -988,8 +1007,6 @@ class MainWindow(QMainWindow):
         left.addWidget(self.is_practice)
         left.addWidget(QLabel("Exam date (YYYY-MM-DD)"))
         left.addWidget(self.exam_date)
-        left.addWidget(QLabel("Score (numeric)"))
-        left.addWidget(self.exam_score)
         left.addWidget(QLabel("Result"))
         left.addWidget(self.exam_result)
         left.addWidget(QLabel("Notes"))
@@ -1033,9 +1050,10 @@ class MainWindow(QMainWindow):
         # Add a group box to visually separate the modules
         group_box = QGroupBox("Practice Exam Status")
         group_layout = QVBoxLayout(group_box)
-        # horizontal rows: checkbox + icon label
+        # horizontal rows: checkbox + icon label + date label
 
         self.practice_exam_checkboxes = {}
+        self.practice_exam_date_labels = {}
         modules = ["Life", "A&S", "Seg Funds", "Ethics"]
 
         self.practice_exam_icon_labels = {}
@@ -1047,20 +1065,19 @@ class MainWindow(QMainWindow):
             icon_label = QLabel()
             icon_label.setFixedWidth(22)
             icon_label.setAlignment(Qt.AlignCenter)
+            date_label = QLabel()
+            date_label.setMinimumWidth(100)
+            date_label.setAlignment(Qt.AlignLeft)
 
-            # initialize state from DB without emitting signals
-            try:
-                completed = bool(db.get_practice_exam_status(module))
-            except Exception:
-                completed = False
+            # initialize state (will be updated when trainee is selected)
             checkbox.blockSignals(True)
-            checkbox.setChecked(completed)
+            checkbox.setChecked(False)
             checkbox.blockSignals(False)
 
             # set initial icon and color using SVG icons
-            icon = _load_icon('check' if completed else 'box')
+            icon = _load_icon('box')
             icon_label.setPixmap(icon.pixmap(18, 18))
-            checkbox.setStyleSheet(f"margin-bottom: 6px; color: {'green' if completed else 'red'};")
+            checkbox.setStyleSheet("margin-bottom: 6px; color: red;")
 
             # connect handler (user interaction will trigger stateChanged)
             checkbox.stateChanged.connect(lambda state, m=module: self._toggle_practice_exam_status(m, state))
@@ -1068,9 +1085,11 @@ class MainWindow(QMainWindow):
             row_l.addWidget(checkbox)
             row_l.addStretch(1)
             row_l.addWidget(icon_label)
+            row_l.addWidget(date_label)
             group_layout.addWidget(row)
             self.practice_exam_checkboxes[module] = checkbox
             self.practice_exam_icon_labels[module] = icon_label
+            self.practice_exam_date_labels[module] = date_label
 
         group_box.setLayout(group_layout)
         layout.addWidget(group_box)
@@ -1082,15 +1101,26 @@ class MainWindow(QMainWindow):
         self.tabs.widget(3).layout().addWidget(panel)
 
     def _toggle_practice_exam_status(self, module, state):
-        """Handles toggling the practice exam status for a module. Updates icon, color, persists state and shows status."""
-        status = state == Qt.Checked
+        """Handles toggling the practice exam status for a module for the current trainee. Updates icon, color, persists state and shows status."""
+        # Get current trainee
+        trainee_text = self.exam_trainee.currentText()
+        if not trainee_text or ':' not in trainee_text:
+            return
+        
+        try:
+            trainee_id = int(trainee_text.split(":")[0])
+        except (ValueError, IndexError):
+            return
+        
+        # state is an int (0=Unchecked, 2=Checked)
+        status = state == Qt.CheckState.Checked.value if hasattr(Qt.CheckState, 'Checked') else state == 2
         checkbox = self.practice_exam_checkboxes.get(module)
         icon_label = self.practice_exam_icon_labels.get(module)
         if checkbox is None or icon_label is None:
             return
 
         # update color
-        checkbox.setStyleSheet("color: green;" if status else "color: red;")
+        checkbox.setStyleSheet("margin-bottom: 6px; color: green;" if status else "margin-bottom: 6px; color: red;")
 
         # update icon label
         icon = _load_icon('check' if status else 'box')
@@ -1098,25 +1128,35 @@ class MainWindow(QMainWindow):
 
         # Persist the state in the database
         try:
-            db.update_practice_exam_status(module, status)
+            db.update_practice_exam_status(trainee_id, module, status)
+            # user-visible transient status
+            self._show_status(f"Module '{module}' set to: {'Completed' if status else 'Incomplete'}")
+            # Refresh the trainee tab to show updated practice exam completion status
+            self._refresh_recruiters()
         except Exception as e:
             # show non-blocking error in status bar
-            try:
-                self._show_status(f"Failed to update practice exam status for {module}: {e}")
-            except Exception:
-                pass
-            return
-
-        # user-visible transient status
-        try:
-            self._show_status(f"Module '{module}' set to: {'Completed' if status else 'Incomplete'}")
-        except Exception:
-            pass
+            self._show_status(f"Failed to update practice exam status for {module}: {e}")
+            # Revert UI change on failure
+            checkbox.blockSignals(True)
+            checkbox.setChecked(not status)
+            checkbox.blockSignals(False)
 
     def _reset_practice_exam_statuses(self) -> None:
-        """Reset all practice exam statuses to incomplete and update UI."""
+        """Reset all practice exam statuses to incomplete for the current trainee and update UI."""
+        # Get current trainee
+        trainee_text = self.exam_trainee.currentText()
+        if not trainee_text or ':' not in trainee_text:
+            QMessageBox.warning(self, "Validation", "Select a trainee first")
+            return
+        
         try:
-            db.reset_practice_exam_statuses()
+            trainee_id = int(trainee_text.split(":")[0])
+        except (ValueError, IndexError):
+            QMessageBox.warning(self, "Error", "Invalid trainee selection")
+            return
+        
+        try:
+            db.reset_practice_exam_statuses_for_trainee(trainee_id)
         except Exception as e:
             try:
                 self._show_status(f"Failed to reset practice exam statuses: {e}")
@@ -1127,7 +1167,7 @@ class MainWindow(QMainWindow):
         for module, cb in self.practice_exam_checkboxes.items():
             cb.blockSignals(True)
             cb.setChecked(False)
-            cb.setStyleSheet("color: red;")
+            cb.setStyleSheet("margin-bottom: 6px; color: red;")
             cb.blockSignals(False)
             icon_label = self.practice_exam_icon_labels.get(module)
             if icon_label is not None:
@@ -1138,6 +1178,52 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
+    def _update_practice_exam_panel(self):
+        """Update the practice exam status panel for the currently selected trainee."""
+        trainee_text = self.exam_trainee.currentText()
+        if not trainee_text or ':' not in trainee_text:
+            # Reset all to unchecked if no trainee selected
+            for module, cb in self.practice_exam_checkboxes.items():
+                cb.blockSignals(True)
+                cb.setChecked(False)
+                cb.setStyleSheet("margin-bottom: 6px; color: red;")
+                cb.blockSignals(False)
+                icon_label = self.practice_exam_icon_labels.get(module)
+                if icon_label is not None:
+                    icon = _load_icon('box')
+                    icon_label.setPixmap(icon.pixmap(18, 18))
+                date_label = self.practice_exam_date_labels.get(module)
+                if date_label is not None:
+                    date_label.setText("")
+            return
+        
+        try:
+            trainee_id = int(trainee_text.split(":")[0])
+            statuses = db.get_practice_exam_status_for_trainee(trainee_id)
+            completion_dates = db.get_all_practice_module_completion_dates(trainee_id)
+            
+            for module, cb in self.practice_exam_checkboxes.items():
+                completed = statuses.get(module, False)
+                cb.blockSignals(True)
+                cb.setChecked(completed)
+                cb.setStyleSheet(f"margin-bottom: 6px; color: {'green' if completed else 'red'};")
+                cb.blockSignals(False)
+                icon_label = self.practice_exam_icon_labels.get(module)
+                if icon_label is not None:
+                    icon = _load_icon('check' if completed else 'box')
+                    icon_label.setPixmap(icon.pixmap(18, 18))
+                date_label = self.practice_exam_date_labels.get(module)
+                if date_label is not None:
+                    completion_date = completion_dates.get(module, "")
+                    if completion_date:
+                        # Format timestamp for display (extract date portion only)
+                        date_str = completion_date.split('T')[0] if 'T' in completion_date else completion_date
+                        date_label.setText(f"({date_str})")
+                    else:
+                        date_label.setText("")
+        except Exception as e:
+            pass
+
     def _add_exam(self) -> None:
         t = self.exam_trainee.currentText();
         if not t: QMessageBox.warning(self, "Validation", "Select a trainee"); return
@@ -1145,18 +1231,14 @@ class MainWindow(QMainWindow):
         exam_date = self.exam_date.text().strip() or None
         module = self.exam_module.currentText() or None
         is_practice = bool(self.is_practice.isChecked())
-        score_raw = self.exam_score.text().strip(); score = None
-        if score_raw:
-            try: score = float(score_raw)
-            except Exception: QMessageBox.warning(self, "Validation", "Score must be numeric"); return
-        res = self.exam_result.currentText(); passed = True if res == 'Pass' else (False if res == 'Fail' else (score >= 70.0 if score is not None else None))
+        res = self.exam_result.currentText(); passed = True if res == 'Pass' else (False if res == 'Fail' else None)
         reimbursement = False
         tid = int(t.split(":", 1)[0])
         if passed is False and not is_practice and db.practice_exams_complete(tid):
             if QMessageBox.question(self, "Reimbursement", "Trainee completed practice exams. Apply for reimbursement for rewrite?") == QMessageBox.StandardButton.Yes:
                 reimbursement = True
         notes = self.exam_notes.toPlainText().strip() or None
-        db.add_exam_v2(tid, cid, exam_date, module, is_practice, passed, score, notes, reimbursement_requested=reimbursement)
+        db.add_exam_v2(tid, cid, exam_date, module, is_practice, passed, notes, reimbursement_requested=reimbursement)
         self._refresh_exams()
         try:
             self._show_status(f"Added exam for trainee {tid}")
@@ -1221,14 +1303,13 @@ class MainWindow(QMainWindow):
         module_cb.setCurrentText(e['module'] or "")
         practice_cb = QCheckBox("Practice exam"); practice_cb.setChecked(bool(e['is_practice']))
         date_e = QLineEdit(e['exam_date'] or "")
-        score_e = QLineEdit(str(e['score']) if e['score'] is not None else "")
         result_cb = QComboBox(); result_cb.addItems(["Unknown","Pass","Fail"]); 
         if e['passed'] == 1: result_cb.setCurrentText('Pass')
         elif e['passed'] == 0: result_cb.setCurrentText('Fail')
         notes_e = QTextEdit(e['notes'] or "")
         reimb_cb = QCheckBox("Reimbursement requested"); reimb_cb.setChecked(bool(e['reimbursement_requested']))
         form.addRow("Trainee", trainee_cb); form.addRow("Class", class_cb); form.addRow("Module", module_cb); form.addRow(practice_cb)
-        form.addRow("Exam date", date_e); form.addRow("Score", score_e); form.addRow("Result", result_cb); form.addRow("Notes", notes_e); form.addRow(reimb_cb)
+        form.addRow("Exam date", date_e); form.addRow("Result", result_cb); form.addRow("Notes", notes_e); form.addRow(reimb_cb)
         btns = QHBoxLayout(); save = QPushButton("Save"); delete = QPushButton("Delete"); cancel = QPushButton("Cancel"); btns.addWidget(save); btns.addWidget(delete); btns.addWidget(cancel); form.addRow(btns)
 
         def do_save():
@@ -1239,16 +1320,11 @@ class MainWindow(QMainWindow):
             exam_date = date_e.text().strip() or None
             module = module_cb.currentText() or None
             is_practice = bool(practice_cb.isChecked())
-            score = None
-            sraw = score_e.text().strip()
-            if sraw:
-                try: score = float(sraw)
-                except Exception: QMessageBox.warning(self, "Validation", "Score must be numeric"); return
-            res = result_cb.currentText(); passed = True if res == 'Pass' else (False if res == 'Fail' else (score >= 70.0 if score is not None else None))
+            res = result_cb.currentText(); passed = True if res == 'Pass' else (False if res == 'Fail' else None)
             notes = notes_e.toPlainText().strip() or None
             reimb = bool(reimb_cb.isChecked())
             try:
-                db.update_exam(eid, tid, cid, exam_date, module, is_practice, passed, score, notes, reimbursement_requested=reimb)
+                db.update_exam(eid, tid, cid, exam_date, module, is_practice, passed, notes, reimbursement_requested=reimb)
             except Exception as exc:
                 QMessageBox.critical(self, "Error", f"Failed to update exam: {exc}"); return
             dlg.accept()
@@ -1266,18 +1342,38 @@ class MainWindow(QMainWindow):
     def _build_licenses_tab(self) -> None:
         w = QWidget(); l = QHBoxLayout(w)
         left = QVBoxLayout()
-        self.lic_trainee = QComboBox(); self.lic_app = QLineEdit(); self.lic_approval = QLineEdit(); self.lic_number = QLineEdit(); self.lic_status = QLineEdit()
-        left.addWidget(QLabel("Trainee")); left.addWidget(self.lic_trainee)
-        left.addWidget(QLabel("Application date")); left.addWidget(self.lic_app)
-        left.addWidget(QLabel("Approval date")); left.addWidget(self.lic_approval)
-        left.addWidget(QLabel("License number")); left.addWidget(self.lic_number)
-        left.addWidget(QLabel("Status")); left.addWidget(self.lic_status)
+        self.lic_trainee = QComboBox()
+        self.lic_trainee.currentIndexChanged.connect(self._update_license_trainee_info)  # Connect trainee selection
+        self.lic_app = QLineEdit()
+        self.lic_approval = QLineEdit()
+        self.lic_number = QLineEdit()
+        self.lic_status = QLineEdit()
+        left.addWidget(QLabel("Trainee"))
+        left.addWidget(self.lic_trainee)
+        left.addWidget(QLabel("Application date"))
+        left.addWidget(self.lic_app)
+        left.addWidget(QLabel("Approval date"))
+        left.addWidget(self.lic_approval)
+        left.addWidget(QLabel("License number"))
+        left.addWidget(self.lic_number)
+        left.addWidget(QLabel("Status"))
+        left.addWidget(self.lic_status)
         left.addWidget(QPushButton("Add License", clicked=self._add_license))
         l.addLayout(left, 1)
-        right = QVBoxLayout(); self.lic_list = QListWidget(); right.addWidget(QLabel("Licenses")); right.addWidget(self.lic_list)
-        lic_btns = QHBoxLayout(); lic_edit = QPushButton("Edit"); lic_delete = QPushButton("Delete"); lic_edit.clicked.connect(self._edit_license); lic_delete.clicked.connect(lambda: self._delete_license()); lic_btns.addWidget(lic_edit); lic_btns.addWidget(lic_delete)
+        right = QVBoxLayout()
+        self.lic_list = QListWidget()
+        right.addWidget(QLabel("Licenses"))
+        right.addWidget(self.lic_list)
+        lic_btns = QHBoxLayout()
+        lic_edit = QPushButton("Edit")
+        lic_delete = QPushButton("Delete")
+        lic_edit.clicked.connect(self._edit_license)
+        lic_delete.clicked.connect(lambda: self._delete_license())
+        lic_btns.addWidget(lic_edit)
+        lic_btns.addWidget(lic_delete)
         right.addLayout(lic_btns)
-        l.addLayout(right, 2); self.tabs.addTab(w, "Licenses")
+        l.addLayout(right, 2)
+        self.tabs.addTab(w, "Licenses")
         self._refresh_license_dropdowns(); self._refresh_licenses()
 
     def _add_license(self) -> None:
@@ -1355,6 +1451,21 @@ class MainWindow(QMainWindow):
             self._show_status(f"Deleted license: {lid}")
         except Exception:
             pass
+
+    def _update_license_trainee_info(self):
+        """Update license fields based on the selected trainee."""
+        t = self.lic_trainee.currentText()
+        if not t or ':' not in t:
+            return
+        tid = int(t.split(":", 1)[0])
+        license_info = db.get_license_info_for_trainee(tid)
+        if not license_info:
+            return
+
+        self.lic_app.setText(license_info.get("application_submitted_date", ""))
+        self.lic_approval.setText(license_info.get("approval_date", ""))
+        self.lic_number.setText(license_info.get("license_number", ""))
+        self.lic_status.setText(license_info.get("status", ""))
 
 
 def run_pyside_app() -> None:

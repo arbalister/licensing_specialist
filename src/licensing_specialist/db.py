@@ -123,23 +123,80 @@ def _ensure_rep_code_columns(db_path: Optional[Path] = None) -> None:
 
 
 def _ensure_practice_status_table(db_path: Optional[Path] = None) -> None:
-    """Ensure a simple table exists to persist practice exam completion status per module.
+    """Ensure a table exists to persist practice exam completion status per trainee per module with timestamps.
 
     Table schema:
-        practice_exam_status(module TEXT PRIMARY KEY, completed INTEGER DEFAULT 0)
+        practice_exam_status(trainee_id INTEGER, module TEXT, completed INTEGER DEFAULT 0, completed_date TEXT, PRIMARY KEY (trainee_id, module))
     """
     conn = get_conn(db_path)
     cur = conn.cursor()
-    cur.execute(
-        """
-CREATE TABLE IF NOT EXISTS practice_exam_status (
-    module TEXT PRIMARY KEY,
-    completed INTEGER DEFAULT 0
+    
+    try:
+        # Check if the table exists and what columns it has
+        cur.execute("PRAGMA table_info(practice_exam_status)")
+        columns = [row[1] for row in cur.fetchall()]
+        
+        if len(columns) == 0:
+            # Table doesn't exist, create with new schema
+            # First clean up any leftover old table from previous migrations
+            cur.execute("DROP TABLE IF EXISTS practice_exam_status_old")
+            conn.commit()
+            
+            cur.execute(
+                """
+CREATE TABLE practice_exam_status (
+    trainee_id INTEGER NOT NULL,
+    module TEXT NOT NULL,
+    completed INTEGER DEFAULT 0,
+    completed_date TEXT,
+    PRIMARY KEY (trainee_id, module),
+    FOREIGN KEY(trainee_id) REFERENCES trainee(id) ON DELETE CASCADE
 );
-        """
-    )
-    conn.commit()
-    conn.close()
+                """
+            )
+            conn.commit()
+        elif 'completed_date' not in columns:
+            # Old schema exists without completed_date column, need to migrate
+            
+            # First, drop any leftover old table from a previous failed migration
+            cur.execute("DROP TABLE IF EXISTS practice_exam_status_old")
+            conn.commit()
+            
+            # Rename old table
+            cur.execute("ALTER TABLE practice_exam_status RENAME TO practice_exam_status_old")
+            conn.commit()
+            
+            # Create new table with correct schema
+            cur.execute(
+                """
+CREATE TABLE practice_exam_status (
+    trainee_id INTEGER NOT NULL,
+    module TEXT NOT NULL,
+    completed INTEGER DEFAULT 0,
+    completed_date TEXT,
+    PRIMARY KEY (trainee_id, module),
+    FOREIGN KEY(trainee_id) REFERENCES trainee(id) ON DELETE CASCADE
+);
+                """
+            )
+            conn.commit()
+            
+            # Migrate data from old table
+            cur.execute(
+                "INSERT OR IGNORE INTO practice_exam_status (trainee_id, module, completed) "
+                "SELECT trainee_id, module, completed FROM practice_exam_status_old"
+            )
+            conn.commit()
+            
+            # Drop old table
+            cur.execute("DROP TABLE IF EXISTS practice_exam_status_old")
+            conn.commit()
+        else:
+            # Schema is already up to date, but clean up any leftover old table
+            cur.execute("DROP TABLE IF EXISTS practice_exam_status_old")
+            conn.commit()
+    finally:
+        conn.close()
 
 
 def _validate_rep_code(rep_code: Optional[str]) -> Optional[str]:
@@ -333,13 +390,6 @@ def search_trainees_by_rep(prefix: str, limit: int = 10, db_path: Optional[Path]
     return rows
 
 
-def get_trainee(trainee_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM trainee WHERE id = ?", (trainee_id,))
-    row = cur.fetchone()
-    conn.close()
-    return row
 
 
 def update_trainee(trainee_id: int, first_name: str, last_name: str, dob: Optional[str], recruiter_id: Optional[int], rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> None:
@@ -427,22 +477,35 @@ def add_exam(trainee_id: int, class_id: Optional[int], exam_date: Optional[str],
     return eid
 
 
-def update_practice_exam_status(module: str, completed: bool, db_path: Optional[Path] = None) -> None:
-    """Set the completion flag for a practice exam module (insert or replace)."""
+def update_practice_exam_status(trainee_id: int, module: str, completed: bool, db_path: Optional[Path] = None) -> None:
+    """Set the completion flag for a practice exam module for a specific trainee (insert or replace).
+    
+    When completed=True, sets completed_date to current timestamp.
+    When completed=False, clears the completed_date.
+    """
     _ensure_practice_status_table(db_path)
     conn = get_conn(db_path)
     cur = conn.cursor()
-    cur.execute("INSERT OR REPLACE INTO practice_exam_status (module, completed) VALUES (?, ?)", (module, int(bool(completed))))
+    if completed:
+        cur.execute(
+            "INSERT OR REPLACE INTO practice_exam_status (trainee_id, module, completed, completed_date) VALUES (?, ?, 1, CURRENT_TIMESTAMP)",
+            (trainee_id, module)
+        )
+    else:
+        cur.execute(
+            "INSERT OR REPLACE INTO practice_exam_status (trainee_id, module, completed, completed_date) VALUES (?, ?, 0, NULL)",
+            (trainee_id, module)
+        )
     conn.commit()
     conn.close()
 
 
-def get_practice_exam_status(module: str, db_path: Optional[Path] = None) -> bool:
-    """Return True if the module is marked complete in the practice_exam_status table."""
+def get_practice_exam_status(trainee_id: int, module: str, db_path: Optional[Path] = None) -> bool:
+    """Return True if the module is marked complete for the trainee in the practice_exam_status table."""
     _ensure_practice_status_table(db_path)
     conn = get_conn(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT completed FROM practice_exam_status WHERE module = ?", (module,))
+    cur.execute("SELECT completed FROM practice_exam_status WHERE trainee_id = ? AND module = ?", (trainee_id, module))
     row = cur.fetchone()
     conn.close()
     if not row:
@@ -453,25 +516,55 @@ def get_practice_exam_status(module: str, db_path: Optional[Path] = None) -> boo
         return bool(row[0])
 
 
-def list_practice_exam_status(db_path: Optional[Path] = None) -> dict:
-    """Return a mapping module -> bool for all stored practice exam statuses."""
+def get_practice_exam_status_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> dict:
+    """Return a mapping module -> bool for all practice exam statuses for a specific trainee."""
     _ensure_practice_status_table(db_path)
     conn = get_conn(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT module, completed FROM practice_exam_status")
+    cur.execute("SELECT module, completed FROM practice_exam_status WHERE trainee_id = ?", (trainee_id,))
     rows = cur.fetchall()
     conn.close()
     return {r['module']: bool(r['completed']) for r in rows}
 
 
-def reset_practice_exam_statuses(db_path: Optional[Path] = None) -> None:
-    """Reset all practice exam statuses to incomplete (0)."""
+def reset_practice_exam_statuses_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> None:
+    """Reset all practice exam statuses to incomplete (0) for a specific trainee."""
     _ensure_practice_status_table(db_path)
     conn = get_conn(db_path)
     cur = conn.cursor()
-    cur.execute("UPDATE practice_exam_status SET completed = 0")
+    cur.execute("UPDATE practice_exam_status SET completed = 0, completed_date = NULL WHERE trainee_id = ?", (trainee_id,))
     conn.commit()
     conn.close()
+
+
+def get_practice_module_completion_date(trainee_id: int, module: str, db_path: Optional[Path] = None) -> Optional[str]:
+    """Return the completion date (ISO format string) for a practice exam module, or None if not completed."""
+    _ensure_practice_status_table(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT completed_date FROM practice_exam_status WHERE trainee_id = ? AND module = ? AND completed = 1",
+        (trainee_id, module)
+    )
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return row['completed_date']
+
+
+def get_all_practice_module_completion_dates(trainee_id: int, db_path: Optional[Path] = None) -> dict:
+    """Return a mapping module -> completion_date (ISO format string) for all completed modules."""
+    _ensure_practice_status_table(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT module, completed_date FROM practice_exam_status WHERE trainee_id = ? AND completed = 1",
+        (trainee_id,)
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return {r['module']: r['completed_date'] for r in rows if r['completed_date']}
 
 
 def delete_exam(exam_id: int, db_path: Optional[Path] = None) -> None:
@@ -482,27 +575,27 @@ def delete_exam(exam_id: int, db_path: Optional[Path] = None) -> None:
     conn.close()
 
 
-def update_exam(exam_id: int, trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], score: Optional[float], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> None:
+def update_exam(exam_id: int, trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> None:
     """Update an exam record with the provided fields."""
     _ensure_exam_columns(db_path)
     conn = get_conn(db_path)
     cur = conn.cursor()
     cur.execute(
-        "UPDATE exam SET trainee_id = ?, class_id = ?, exam_date = ?, module = ?, is_practice = ?, passed = ?, score = ?, notes = ?, reimbursement_requested = ? WHERE id = ?",
-        (trainee_id, class_id, exam_date, module, int(bool(is_practice)), (1 if passed else (0 if passed is False else None)), score, notes, int(bool(reimbursement_requested)), exam_id),
+        "UPDATE exam SET trainee_id = ?, class_id = ?, exam_date = ?, module = ?, is_practice = ?, passed = ?, notes = ?, reimbursement_requested = ? WHERE id = ?",
+        (trainee_id, class_id, exam_date, module, int(bool(is_practice)), (1 if passed else (0 if passed is False else None)), notes, int(bool(reimbursement_requested)), exam_id),
     )
     conn.commit()
     conn.close()
 
 
-def add_exam_v2(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], score: Optional[float], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> int:
-    """Add an exam record with module, practice flag, pass/fail, numeric score, and reimbursement flag."""
+def add_exam_v2(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> int:
+    """Add an exam record with module, practice flag, pass/fail, and reimbursement flag."""
     _ensure_exam_columns(db_path)
     conn = get_conn(db_path)
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO exam (trainee_id, class_id, exam_date, module, is_practice, passed, score, notes, reimbursement_requested) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (trainee_id, class_id, exam_date, module, int(bool(is_practice)), (1 if passed else (0 if passed is False else None)), score, notes, int(bool(reimbursement_requested))),
+        "INSERT INTO exam (trainee_id, class_id, exam_date, module, is_practice, passed, notes, reimbursement_requested) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (trainee_id, class_id, exam_date, module, int(bool(is_practice)), (1 if passed else (0 if passed is False else None)), notes, int(bool(reimbursement_requested))),
     )
     conn.commit()
     eid = cur.lastrowid
@@ -547,12 +640,89 @@ def list_licenses(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
     return rows
 
 
-def practice_exams_complete(trainee_id: int, min_score: float = 60.0, required_count: int = 4, db_path: Optional[Path] = None) -> bool:
-    """Return True if trainee has at least `required_count` practice exams with score >= min_score."""
+def practice_exams_complete(trainee_id: int, required_count: int = 4, db_path: Optional[Path] = None) -> bool:
+    """Return True if trainee has at least `required_count` practice exams marked as passed."""
     _ensure_exam_columns(db_path)
     conn = get_conn(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM exam WHERE trainee_id = ? AND is_practice = 1 AND score IS NOT NULL AND score >= ?", (trainee_id, min_score))
+    cur.execute("SELECT COUNT(*) FROM exam WHERE trainee_id = ? AND is_practice = 1 AND passed = 1", (trainee_id,))
     cnt = cur.fetchone()[0]
     conn.close()
     return cnt >= required_count
+
+
+def all_practice_modules_marked_complete(trainee_id: int, db_path: Optional[Path] = None) -> bool:
+    """Return True if all 4 practice exam modules (Life, A&S, Seg Funds, Ethics) are marked complete for the trainee."""
+    _ensure_practice_status_table(db_path)
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    required_modules = ["Life", "A&S", "Seg Funds", "Ethics"]
+    cur.execute("SELECT COUNT(*) FROM practice_exam_status WHERE trainee_id = ? AND module IN (?, ?, ?, ?) AND completed = 1", 
+                (trainee_id, required_modules[0], required_modules[1], required_modules[2], required_modules[3]))
+    cnt = cur.fetchone()[0]
+    conn.close()
+    return cnt == len(required_modules)
+
+
+def check_seewhy_guarantee(trainee_id: int, first_provincial_exam_date: Optional[str], db_path: Optional[Path] = None) -> bool:
+    """Check if trainee qualifies for SeeWhy Guarantee.
+    
+    A trainee qualifies if all 4 practice exam modules (Life, A&S, Seg Funds, Ethics) 
+    were completed before their first provincial exam date.
+    
+    Args:
+        trainee_id: The ID of the trainee
+        first_provincial_exam_date: ISO format date string of first provincial exam (e.g., "2024-01-15")
+        db_path: Optional path to the database file
+    
+    Returns:
+        True if all 4 modules were completed before the provincial exam date, False otherwise.
+        Returns False if first_provincial_exam_date is None.
+    """
+    if not first_provincial_exam_date:
+        return False
+    
+    completion_dates = get_all_practice_module_completion_dates(trainee_id, db_path)
+    required_modules = ["Life", "A&S", "Seg Funds", "Ethics"]
+    
+    # Check if all required modules are in completion_dates
+    if len(completion_dates) < len(required_modules):
+        return False
+    
+    # Check if all modules are in the dict
+    for module in required_modules:
+        if module not in completion_dates:
+            return False
+    
+    # Check if all completion dates are before the provincial exam date
+    for module in required_modules:
+        completion_date = completion_dates[module]
+        if not completion_date:
+            return False
+        # Compare as strings (ISO format sorts correctly lexicographically)
+        if completion_date.split('T')[0] >= first_provincial_exam_date:
+            return False
+    
+    return True
+
+
+def get_license_info_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> Optional[dict]:
+    """Retrieve license information for a specific trainee."""
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT application_submitted_date, approval_date, license_number, status "
+        "FROM license WHERE trainee_id = ? ORDER BY application_submitted_date DESC LIMIT 1",
+        (trainee_id,)
+    )
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "application_submitted_date": row["application_submitted_date"],
+        "approval_date": row["approval_date"],
+        "license_number": row["license_number"],
+        "status": row["status"],
+    }
+

@@ -1,7 +1,77 @@
+
 import re
 import sqlite3
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
+
+class CRUDHelper:
+    """
+    Simple CRUD helper for a given table.
+    Used for recruiter, trainee, class, exam, and license tables.
+    """
+    def __init__(self, table: str, id_col: str = "id"):
+        self.table = table
+        self.id_col = id_col
+
+    def add(self, fields: Dict[str, Any], db_path: Optional[Path] = None) -> int:
+        conn = get_conn(db_path)
+        cur = conn.cursor()
+        keys = ', '.join(fields.keys())
+        qmarks = ', '.join(['?'] * len(fields))
+        sql = f"INSERT INTO {self.table} ({keys}) VALUES ({qmarks})"
+        cur.execute(sql, tuple(fields.values()))
+        conn.commit()
+        rowid = cur.lastrowid
+        conn.close()
+        return rowid
+
+    def update(self, row_id: int, fields: Dict[str, Any], db_path: Optional[Path] = None) -> None:
+        conn = get_conn(db_path)
+        cur = conn.cursor()
+        sets = ', '.join([f"{k}=?" for k in fields.keys()])
+        sql = f"UPDATE {self.table} SET {sets} WHERE {self.id_col}=?"
+        cur.execute(sql, tuple(fields.values()) + (row_id,))
+        conn.commit()
+        conn.close()
+
+    def delete(self, row_id: int, db_path: Optional[Path] = None) -> None:
+        conn = get_conn(db_path)
+        cur = conn.cursor()
+        sql = f"DELETE FROM {self.table} WHERE {self.id_col}=?"
+        cur.execute(sql, (row_id,))
+        conn.commit()
+        conn.close()
+
+    def get(self, row_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
+        conn = get_conn(db_path)
+        cur = conn.cursor()
+        sql = f"SELECT * FROM {self.table} WHERE {self.id_col}=?"
+        cur.execute(sql, (row_id,))
+        row = cur.fetchone()
+        conn.close()
+        return row
+
+    def list(self, order_by: Optional[str] = None, db_path: Optional[Path] = None) -> List[sqlite3.Row]:
+        conn = get_conn(db_path)
+        cur = conn.cursor()
+        sql = f"SELECT * FROM {self.table}"
+        if order_by:
+            sql += f" ORDER BY {order_by}"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        conn.close()
+        return rows
+
+def link_trainee_to_class(trainee_id: int, class_id: int, db_path: Optional[Path] = None) -> None:
+    """Link a trainee to a class by inserting into the trainee_class table."""
+    conn = get_conn(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT OR IGNORE INTO trainee_class (trainee_id, class_id) VALUES (?, ?)",
+        (trainee_id, class_id)
+    )
+    conn.commit()
+    conn.close()
 
 
 DEFAULT_DB = Path(__file__).resolve().parents[2] / "licensing.db"
@@ -215,119 +285,72 @@ def _validate_rep_code(rep_code: Optional[str]) -> Optional[str]:
 
 
 
-def add_recruiter(name: str, email: Optional[str] = None, phone: Optional[str] = None, rep_code: Optional[str] = None,
-                  db_path: Optional[Path] = None) -> int:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
+def add_recruiter(name: str, email: Optional[str] = None, phone: Optional[str] = None, rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> int:
     # validate rep_code
     try:
         rc = _validate_rep_code(rep_code)
     except ValueError:
-        conn.close()
         raise
-    cur.execute("INSERT INTO recruiter (name, email, phone, rep_code) VALUES (?, ?, ?, ?)", (name, email, phone, rc))
-    conn.commit()
-    rid = cur.lastrowid
-    conn.close()
-    return rid
-
-
-def list_recruiters(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM recruiter ORDER BY name")
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-def find_recruiter_by_name(name: str, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
-    """Find recruiter by exact name (case-insensitive). Returns first match or None."""
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM recruiter WHERE LOWER(name) = LOWER(?) LIMIT 1", (name,))
-    row = cur.fetchone()
-    conn.close()
-    return row
-
-
-def find_recruiter_by_rep_code(rep_code: str, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
-    if not rep_code:
-        return None
-    code = rep_code.strip().upper()
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM recruiter WHERE rep_code = ? LIMIT 1", (code,))
-    row = cur.fetchone()
-    conn.close()
-    return row
-
-
-def search_recruiters_by_name(prefix: str, limit: int = 10, db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    """Return recruiters whose name starts with prefix (case-insensitive)."""
-    if not prefix:
-        return []
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    like = prefix.strip() + '%'
-    cur.execute("SELECT * FROM recruiter WHERE name LIKE ? COLLATE NOCASE ORDER BY name LIMIT ?", (like, limit))
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-def search_recruiters_by_rep(prefix: str, limit: int = 10, db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    if not prefix:
-        return []
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    like = prefix.strip().upper() + '%'
-    cur.execute("SELECT * FROM recruiter WHERE rep_code LIKE ? ORDER BY rep_code LIMIT ?", (like, limit))
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-def get_recruiter(recruiter_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM recruiter WHERE id = ?", (recruiter_id,))
-    row = cur.fetchone()
-    conn.close()
-    return row
-
+    return recruiter_crud.add({
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "rep_code": rc
+    }, db_path=db_path)
 
 def update_recruiter(recruiter_id: int, name: str, email: Optional[str], phone: Optional[str], rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> None:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    # validate rep_code
     rc = None
     if rep_code is not None:
         rc = _validate_rep_code(rep_code)
-    cur.execute("UPDATE recruiter SET name = ?, email = ?, phone = ?, rep_code = ? WHERE id = ?", (name, email, phone, rc, recruiter_id))
-    conn.commit()
-    conn.close()
+    recruiter_crud.update(recruiter_id, {
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "rep_code": rc
+    }, db_path=db_path)
+
+def delete_recruiter(recruiter_id: int, db_path: Optional[Path] = None) -> None:
+    recruiter_crud.delete(recruiter_id, db_path=db_path)
+
+def get_recruiter(recruiter_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
+    return recruiter_crud.get(recruiter_id, db_path=db_path)
+
+def list_recruiters(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
+    return recruiter_crud.list(order_by="name", db_path=db_path)
 
 
 def add_trainee(first_name: str, last_name: str, dob: Optional[str] = None,
                 recruiter_id: Optional[int] = None, rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> int:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    # validate rep_code
     try:
         rc = _validate_rep_code(rep_code)
     except ValueError:
-        conn.close()
         raise
-    cur.execute(
-        "INSERT INTO trainee (first_name, last_name, dob, recruiter_id, rep_code) VALUES (?, ?, ?, ?, ?)",
-        (first_name, last_name, dob, recruiter_id, rc),
-    )
-    conn.commit()
-    tid = cur.lastrowid
-    conn.close()
-    return tid
+    return trainee_crud.add({
+        "first_name": first_name,
+        "last_name": last_name,
+        "dob": dob,
+        "recruiter_id": recruiter_id,
+        "rep_code": rc
+    }, db_path=db_path)
 
+
+def update_trainee(trainee_id: int, first_name: str, last_name: str, dob: Optional[str], recruiter_id: Optional[int], rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> None:
+    rc = None
+    if rep_code is not None:
+        rc = _validate_rep_code(rep_code)
+    trainee_crud.update(trainee_id, {
+        "first_name": first_name,
+        "last_name": last_name,
+        "dob": dob,
+        "recruiter_id": recruiter_id,
+        "rep_code": rc
+    }, db_path=db_path)
+
+def delete_trainee(trainee_id: int, db_path: Optional[Path] = None) -> None:
+    trainee_crud.delete(trainee_id, db_path=db_path)
+
+def get_trainee(trainee_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
+    return trainee_crud.get(trainee_id, db_path=db_path)
 
 def list_trainees(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
     conn = get_conn(db_path)
@@ -340,129 +363,28 @@ def list_trainees(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
     return rows
 
 
-def find_trainee_by_name(first_name: str, last_name: str, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
-    """Find trainee by exact first+last name (case-insensitive). Returns first match or None."""
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM trainee WHERE LOWER(first_name)=LOWER(?) AND LOWER(last_name)=LOWER(?) LIMIT 1", (first_name, last_name))
-    row = cur.fetchone()
-    conn.close()
-    return row
-
-
-def find_trainee_by_rep_code(rep_code: str, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
-    if not rep_code:
-        return None
-    code = rep_code.strip().upper()
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM trainee WHERE rep_code = ? LIMIT 1", (code,))
-    row = cur.fetchone()
-    conn.close()
-    return row
-
-
-def search_trainees_by_name(prefix: str, limit: int = 10, db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    """Search trainees by first or last name prefix (case-insensitive). Returns rows with first_name and last_name."""
-    if not prefix:
-        return []
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    like = prefix.strip() + '%'
-    cur.execute(
-        "SELECT * FROM trainee WHERE first_name LIKE ? COLLATE NOCASE OR last_name LIKE ? COLLATE NOCASE ORDER BY last_name, first_name LIMIT ?",
-        (like, like, limit),
-    )
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-def search_trainees_by_rep(prefix: str, limit: int = 10, db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    if not prefix:
-        return []
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    like = prefix.strip().upper() + '%'
-    cur.execute("SELECT * FROM trainee WHERE rep_code LIKE ? ORDER BY rep_code LIMIT ?", (like, limit))
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-
-
-def update_trainee(trainee_id: int, first_name: str, last_name: str, dob: Optional[str], recruiter_id: Optional[int], rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> None:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    rc = None
-    if rep_code is not None:
-        rc = _validate_rep_code(rep_code)
-    cur.execute("UPDATE trainee SET first_name = ?, last_name = ?, dob = ?, recruiter_id = ?, rep_code = ? WHERE id = ?", (first_name, last_name, dob, recruiter_id, rc, trainee_id))
-    conn.commit()
-    conn.close()
-
-
-def delete_recruiter(recruiter_id: int, db_path: Optional[Path] = None) -> None:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM recruiter WHERE id = ?", (recruiter_id,))
-    conn.commit()
-    conn.close()
-
-
-def delete_trainee(trainee_id: int, db_path: Optional[Path] = None) -> None:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM trainee WHERE id = ?", (trainee_id,))
-    conn.commit()
-    conn.close()
-
-
-def delete_class(class_id: int, db_path: Optional[Path] = None) -> None:
-    """Delete a class by id. Trainee links will be removed by FK cascade."""
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM class WHERE id = ?", (class_id,))
-    conn.commit()
-    conn.close()
-
+def add_class(name: str, start_date: Optional[str] = None, end_date: Optional[str] = None, db_path: Optional[Path] = None) -> int:
+    return class_crud.add({
+        "name": name,
+        "start_date": start_date,
+        "end_date": end_date
+    }, db_path=db_path)
 
 def update_class(class_id: int, name: str, start_date: Optional[str], end_date: Optional[str], db_path: Optional[Path] = None) -> None:
-    """Update class record fields."""
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("UPDATE class SET name = ?, start_date = ?, end_date = ? WHERE id = ?", (name, start_date, end_date, class_id))
-    conn.commit()
-    conn.close()
+    class_crud.update(class_id, {
+        "name": name,
+        "start_date": start_date,
+        "end_date": end_date
+    }, db_path=db_path)
 
+def delete_class(class_id: int, db_path: Optional[Path] = None) -> None:
+    class_crud.delete(class_id, db_path=db_path)
 
-def add_class(name: str, start_date: Optional[str] = None, end_date: Optional[str] = None,
-              db_path: Optional[Path] = None) -> int:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("INSERT INTO class (name, start_date, end_date) VALUES (?, ?, ?)", (name, start_date, end_date))
-    conn.commit()
-    cid = cur.lastrowid
-    conn.close()
-    return cid
-
+def get_class(class_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
+    return class_crud.get(class_id, db_path=db_path)
 
 def list_classes(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM class ORDER BY start_date")
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-def link_trainee_to_class(trainee_id: int, class_id: int, db_path: Optional[Path] = None) -> None:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("INSERT OR IGNORE INTO trainee_class (trainee_id, class_id) VALUES (?, ?)", (trainee_id, class_id))
-    conn.commit()
-    conn.close()
+    return class_crud.list(order_by="start_date", db_path=db_path)
 
 
 def add_exam(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], score: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> int:
@@ -567,59 +489,35 @@ def get_all_practice_module_completion_dates(trainee_id: int, db_path: Optional[
     return {r['module']: r['completed_date'] for r in rows if r['completed_date']}
 
 
-def delete_exam(exam_id: int, db_path: Optional[Path] = None) -> None:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM exam WHERE id = ?", (exam_id,))
-    conn.commit()
-    conn.close()
-
+def add_exam_v2(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> int:
+    return exam_crud.add({
+        "trainee_id": trainee_id,
+        "class_id": class_id,
+        "exam_date": exam_date,
+        "module": module,
+        "is_practice": int(bool(is_practice)),
+        "passed": (1 if passed else (0 if passed is False else None)),
+        "notes": notes,
+        "reimbursement_requested": int(bool(reimbursement_requested)),
+    }, db_path=db_path)
 
 def update_exam(exam_id: int, trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> None:
-    """Update an exam record with the provided fields."""
-    _ensure_exam_columns(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute(
-        "UPDATE exam SET trainee_id = ?, class_id = ?, exam_date = ?, module = ?, is_practice = ?, passed = ?, notes = ?, reimbursement_requested = ? WHERE id = ?",
-        (trainee_id, class_id, exam_date, module, int(bool(is_practice)), (1 if passed else (0 if passed is False else None)), notes, int(bool(reimbursement_requested)), exam_id),
-    )
-    conn.commit()
-    conn.close()
+    exam_crud.update(exam_id, {
+        "trainee_id": trainee_id,
+        "class_id": class_id,
+        "exam_date": exam_date,
+        "module": module,
+        "is_practice": int(bool(is_practice)),
+        "passed": (1 if passed else (0 if passed is False else None)),
+        "notes": notes,
+        "reimbursement_requested": int(bool(reimbursement_requested)),
+    }, db_path=db_path)
 
+def delete_exam(exam_id: int, db_path: Optional[Path] = None) -> None:
+    exam_crud.delete(exam_id, db_path=db_path)
 
-def add_exam_v2(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> int:
-    """Add an exam record with module, practice flag, pass/fail, and reimbursement flag."""
-    _ensure_exam_columns(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO exam (trainee_id, class_id, exam_date, module, is_practice, passed, notes, reimbursement_requested) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (trainee_id, class_id, exam_date, module, int(bool(is_practice)), (1 if passed else (0 if passed is False else None)), notes, int(bool(reimbursement_requested))),
-    )
-    conn.commit()
-    eid = cur.lastrowid
-    conn.close()
-    return eid
-
-
-def add_license(trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], license_number: Optional[str], status: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> int:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("INSERT INTO license (trainee_id, application_submitted_date, approval_date, license_number, status, notes) VALUES (?, ?, ?, ?, ?, ?)", (trainee_id, application_submitted_date, approval_date, license_number, status, notes))
-    conn.commit()
-    lid = cur.lastrowid
-    conn.close()
-    return lid
-
-
-def update_license(license_id: int, trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], license_number: Optional[str], status: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> None:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("UPDATE license SET trainee_id = ?, application_submitted_date = ?, approval_date = ?, license_number = ?, status = ?, notes = ? WHERE id = ?", (trainee_id, application_submitted_date, approval_date, license_number, status, notes, license_id))
-    conn.commit()
-    conn.close()
-
+def get_exam(exam_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
+    return exam_crud.get(exam_id, db_path=db_path)
 
 def list_exams(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
     _ensure_exam_columns(db_path)
@@ -630,6 +528,32 @@ def list_exams(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
     conn.close()
     return rows
 
+
+def add_license(trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], license_number: Optional[str], status: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> int:
+    return license_crud.add({
+        "trainee_id": trainee_id,
+        "application_submitted_date": application_submitted_date,
+        "approval_date": approval_date,
+        "license_number": license_number,
+        "status": status,
+        "notes": notes
+    }, db_path=db_path)
+
+def update_license(license_id: int, trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], license_number: Optional[str], status: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> None:
+    license_crud.update(license_id, {
+        "trainee_id": trainee_id,
+        "application_submitted_date": application_submitted_date,
+        "approval_date": approval_date,
+        "license_number": license_number,
+        "status": status,
+        "notes": notes
+    }, db_path=db_path)
+
+def delete_license(license_id: int, db_path: Optional[Path] = None) -> None:
+    license_crud.delete(license_id, db_path=db_path)
+
+def get_license(license_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
+    return license_crud.get(license_id, db_path=db_path)
 
 def list_licenses(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
     conn = get_conn(db_path)
@@ -725,4 +649,10 @@ def get_license_info_for_trainee(trainee_id: int, db_path: Optional[Path] = None
         "license_number": row["license_number"],
         "status": row["status"],
     }
+# Example usage for recruiter CRUD
+recruiter_crud = CRUDHelper("recruiter")
+trainee_crud = CRUDHelper("trainee")
+class_crud = CRUDHelper("class")
+exam_crud = CRUDHelper("exam")
+license_crud = CRUDHelper("license")
 

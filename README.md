@@ -1,8 +1,19 @@
-(Project README)
 
-licensing-specialist
+# Licensing Specialist
 
-This is a small desktop application for managing trainees, recruiters, classes, exams, and licenses.
+This is a modular desktop application for managing trainees, recruiters, classes, exams, and licenses.
+
+## Project Structure
+
+- `src/licensing_specialist/pyside_gui.py`: Main PySide6 GUI logic (entry point)
+- `src/licensing_specialist/tabs/`: Each tab's logic is modularized into its own file:
+	- `recruiter_tab.py`, `trainee_tab.py`, `class_tab.py`, `exam_tab.py`, `license_tab.py`
+- `src/licensing_specialist/widgets.py`: Shared widget helpers for UI construction
+- `src/licensing_specialist/db.py`: Database logic and CRUD helpers (no external dependencies)
+- `src/licensing_specialist/styles.py`, `constants.py`: Centralized styles and constants
+- `src/licensing_specialist/test_*.py`: Unit tests for database and tab logic
+
+## Running the GUI (PySide6)
 
 ## Running the GUI (PySide6)
 
@@ -27,5 +38,20 @@ Or run the PySide6 module directly:
 PYTHONPATH=src .venv/bin/python -m licensing_specialist.pyside_gui
 ```
 
-If you prefer the original Tkinter implementation, `gui.py` acts as a shim that delegates to the PySide6 implementation.
+
+## Running Tests
+
+To run all tests:
+
+```bash
+PYTHONPATH=src pytest src/licensing_specialist/test_*.py
+```
+
+Tests cover all major database and tab logic, including CRUD operations and exam/practice status management.
+
+## Notes
+
+- All tab logic is modularized for maintainability.
+- Shared widget helpers are in `widgets.py`.
+- The codebase is free of legacy/orphaned code.
 

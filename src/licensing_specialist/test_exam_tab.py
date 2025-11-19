@@ -20,7 +20,10 @@ import db
 
 
 def setup_test_data(db_path):
-    """Create a test database with sample recruiter, trainee, class, and exam data."""
+    """
+    Create a test database with sample recruiter, trainee, class, and exam data.
+    Returns: (recruiter_id, trainee_id, class_id)
+    """
     db.init_db(db_path)
     
     # Add a recruiter
@@ -50,7 +53,9 @@ def setup_test_data(db_path):
 
 
 def test_add_exam():
-    """Test adding an exam."""
+    """
+    Test adding an exam.
+    """
     with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tf:
         db_path = tf.name
     
@@ -75,7 +80,9 @@ def test_add_exam():
 
 
 def test_list_exams():
-    """Test listing all exams."""
+    """
+    Test listing all exams.
+    """
     with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tf:
         db_path = tf.name
     
@@ -114,7 +121,9 @@ def test_list_exams():
 
 
 def test_filter_exams_by_trainee():
-    """Test filtering exams by trainee_id."""
+    """
+    Test filtering exams by trainee_id.
+    """
     with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tf:
         db_path = tf.name
     
@@ -165,7 +174,9 @@ def test_filter_exams_by_trainee():
 
 
 def test_exam_data_structure():
-    """Test that exam records have expected fields."""
+    """
+    Test that exam records have expected fields.
+    """
     with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tf:
         db_path = tf.name
     
@@ -206,7 +217,9 @@ def test_exam_data_structure():
 
 
 def test_exam_with_nullable_fields():
-    """Test exam creation with NULL fields."""
+    """
+    Test exam creation with NULL fields.
+    """
     with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tf:
         db_path = tf.name
     
@@ -241,7 +254,9 @@ def test_exam_with_nullable_fields():
 
 
 def test_practice_exam_status_integration():
-    """Test practice exam status functions work with exams."""
+    """
+    Test practice exam status functions work with exams.
+    """
     with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tf:
         db_path = tf.name
     

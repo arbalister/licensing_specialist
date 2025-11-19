@@ -4,29 +4,31 @@ import tempfile
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from db import *
+import db
 
 def test_practice_exam_status():
-    # Use a temp DB file
+    """Test practice exam status CRUD for a single trainee."""
     with tempfile.NamedTemporaryFile(suffix='.db') as tf:
         db_path = tf.name
-        init_db(db_path)
+        db.init_db(db_path)
+        # Add a trainee
+        trainee_id = db.add_trainee("Test", "User", db_path=db_path)
         # Should be incomplete by default
-        assert get_practice_exam_status('Life', db_path) is False
+        assert db.get_practice_exam_status(trainee_id, 'Life', db_path) is False
         # Set to complete
-        update_practice_exam_status('Life', True, db_path)
-        assert get_practice_exam_status('Life', db_path) is True
+        db.update_practice_exam_status(trainee_id, 'Life', True, db_path)
+        assert db.get_practice_exam_status(trainee_id, 'Life', db_path) is True
         # Set to incomplete
-        update_practice_exam_status('Life', False, db_path)
-        assert get_practice_exam_status('Life', db_path) is False
+        db.update_practice_exam_status(trainee_id, 'Life', False, db_path)
+        assert db.get_practice_exam_status(trainee_id, 'Life', db_path) is False
         # List status
-        update_practice_exam_status('A&S', True, db_path)
-        status = list_practice_exam_status(db_path)
+        db.update_practice_exam_status(trainee_id, 'A&S', True, db_path)
+        status = db.get_practice_exam_status_for_trainee(trainee_id, db_path)
         assert status['A&S'] is True
         assert status['Life'] is False
         # Reset all
-        reset_practice_exam_statuses(db_path)
-        status = list_practice_exam_status(db_path)
+        db.reset_practice_exam_statuses_for_trainee(trainee_id, db_path)
+        status = db.get_practice_exam_status_for_trainee(trainee_id, db_path)
         assert all(not v for v in status.values())
 
 if __name__ == '__main__':

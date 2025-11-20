@@ -1,6 +1,6 @@
 # Centralized constants and style definitions
 
-APP_TITLE = "Licensing Specialist (PySide6)"
+APP_TITLE = "Licensing Specialist"
 
 # Colors
 COLOR_SUCCESS = "#4CAF50"
@@ -14,7 +14,7 @@ STYLE_SECTION_HEADER = "font-weight: bold; font-size: 12pt; margin-top: 10px;"
 LABEL_NAME = "Name"
 LABEL_EMAIL = "Email"
 LABEL_PHONE = "Phone"
-LABEL_REP_CODE = "Rep code (5 alnum)"
+LABEL_REP_CODE = "Rep code"
 LABEL_APPLICATION_DATE = "Application date"
 LABEL_APPROVAL_DATE = "Approval date"
 LABEL_LICENSE_NUMBER = "License number"

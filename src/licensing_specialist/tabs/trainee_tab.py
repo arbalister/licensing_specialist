@@ -20,7 +20,7 @@ def setup_trainee_tab(self):
         ("First name", self.tr_first),
         ("Last name", self.tr_last),
         ("IBA Date (YYYY-MM-DD)", self.tr_dob),
-        ("Rep code (5 alnum)", self.tr_rep),
+        ("Rep code (5)", self.tr_rep),
         ("Recruiter", self.tr_recruiter),
     ]
     left = create_form_section(form_fields)

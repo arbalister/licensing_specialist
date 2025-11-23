@@ -23,7 +23,7 @@ def setup_recruiter_tab(main_window):
         ("Name", main_window.rec_name),
         ("Email", main_window.rec_email),
         ("Phone", main_window.rec_phone),
-        ("Rep code (5 alnum)", main_window.rec_rep),
+        ("Rep code", main_window.rec_rep),
     ]
     left = create_form_section(form_fields)
     left.addWidget(add_btn)
@@ -47,7 +47,7 @@ def setup_recruiter_tab(main_window):
 
     main_window.rec_table = QTreeWidget()
     main_window.rec_table.setColumnCount(4)
-    main_window.rec_table.setHeaderLabels(["ID", "Name", "Email", "Rep"])
+    main_window.rec_table.setHeaderLabels(["ID","Name", "Email", "Rep"])
     main_window.rec_table.itemSelectionChanged.connect(main_window._on_rec_select)
     main_window.rec_table.setAlternatingRowColors(True)
     main_window.rec_table.setSelectionBehavior(QAbstractItemView.SelectRows)

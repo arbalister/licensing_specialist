@@ -1,8 +1,11 @@
-
 import re
 import sqlite3
+import contextlib
+import logging
 from pathlib import Path
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Union
+
+logger = logging.getLogger(__name__)
 
 class CRUDHelper:
     """
@@ -14,76 +17,103 @@ class CRUDHelper:
         self.id_col = id_col
 
     def add(self, fields: Dict[str, Any], db_path: Optional[Path] = None) -> int:
-        conn = get_conn(db_path)
-        cur = conn.cursor()
-        keys = ', '.join(fields.keys())
-        qmarks = ', '.join(['?'] * len(fields))
-        sql = f"INSERT INTO {self.table} ({keys}) VALUES ({qmarks})"
-        cur.execute(sql, tuple(fields.values()))
-        conn.commit()
-        rowid = cur.lastrowid
-        conn.close()
-        return rowid
+        try:
+            with get_db_connection(db_path) as conn:
+                cur = conn.cursor()
+                keys = ', '.join(fields.keys())
+                qmarks = ', '.join(['?'] * len(fields))
+                sql = f"INSERT INTO {self.table} ({keys}) VALUES ({qmarks})"
+                cur.execute(sql, tuple(fields.values()))
+                conn.commit()
+                rowid = cur.lastrowid
+                logger.info(f"Added record to {self.table} with ID {rowid}")
+            return rowid
+        except Exception as e:
+            logger.error(f"Error adding record to {self.table}: {e}")
+            raise
 
     def update(self, row_id: int, fields: Dict[str, Any], db_path: Optional[Path] = None) -> None:
-        conn = get_conn(db_path)
-        cur = conn.cursor()
-        sets = ', '.join([f"{k}=?" for k in fields.keys()])
-        sql = f"UPDATE {self.table} SET {sets} WHERE {self.id_col}=?"
-        cur.execute(sql, tuple(fields.values()) + (row_id,))
-        conn.commit()
-        conn.close()
+        try:
+            with get_db_connection(db_path) as conn:
+                cur = conn.cursor()
+                sets = ', '.join([f"{k}=?" for k in fields.keys()])
+                sql = f"UPDATE {self.table} SET {sets} WHERE {self.id_col}=?"
+                cur.execute(sql, tuple(fields.values()) + (row_id,))
+                conn.commit()
+                logger.info(f"Updated record in {self.table} with ID {row_id}")
+        except Exception as e:
+            logger.error(f"Error updating record in {self.table} ID {row_id}: {e}")
+            raise
 
     def delete(self, row_id: int, db_path: Optional[Path] = None) -> None:
-        conn = get_conn(db_path)
-        cur = conn.cursor()
-        sql = f"DELETE FROM {self.table} WHERE {self.id_col}=?"
-        cur.execute(sql, (row_id,))
-        conn.commit()
-        conn.close()
+        try:
+            with get_db_connection(db_path) as conn:
+                cur = conn.cursor()
+                sql = f"DELETE FROM {self.table} WHERE {self.id_col}=?"
+                cur.execute(sql, (row_id,))
+                conn.commit()
+                logger.info(f"Deleted record from {self.table} with ID {row_id}")
+        except Exception as e:
+            logger.error(f"Error deleting record from {self.table} ID {row_id}: {e}")
+            raise
 
     def get(self, row_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.Row]:
-        conn = get_conn(db_path)
-        cur = conn.cursor()
-        sql = f"SELECT * FROM {self.table} WHERE {self.id_col}=?"
-        cur.execute(sql, (row_id,))
-        row = cur.fetchone()
-        conn.close()
-        return row
+        try:
+            with get_db_connection(db_path) as conn:
+                cur = conn.cursor()
+                sql = f"SELECT * FROM {self.table} WHERE {self.id_col}=?"
+                cur.execute(sql, (row_id,))
+                row = cur.fetchone()
+            return row
+        except Exception as e:
+            logger.error(f"Error fetching record from {self.table} ID {row_id}: {e}")
+            return None
 
     def list(self, order_by: Optional[str] = None, db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-        conn = get_conn(db_path)
-        cur = conn.cursor()
-        sql = f"SELECT * FROM {self.table}"
-        if order_by:
-            sql += f" ORDER BY {order_by}"
-        cur.execute(sql)
-        rows = cur.fetchall()
-        conn.close()
-        return rows
+        try:
+            with get_db_connection(db_path) as conn:
+                cur = conn.cursor()
+                sql = f"SELECT * FROM {self.table}"
+                if order_by:
+                    sql += f" ORDER BY {order_by}"
+                cur.execute(sql)
+                rows = cur.fetchall()
+            return rows
+        except Exception as e:
+            logger.error(f"Error listing records from {self.table}: {e}")
+            return []
 
 def link_trainee_to_class(trainee_id: int, class_id: int, db_path: Optional[Path] = None) -> None:
     """Link a trainee to a class by inserting into the trainee_class table."""
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT OR IGNORE INTO trainee_class (trainee_id, class_id) VALUES (?, ?)",
-        (trainee_id, class_id)
-    )
-    conn.commit()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT OR IGNORE INTO trainee_class (trainee_id, class_id) VALUES (?, ?)",
+            (trainee_id, class_id)
+        )
+        conn.commit()
 
 
 DEFAULT_DB = Path(__file__).resolve().parents[2] / "licensing.db"
 
 
 def get_conn(db_path: Optional[Path] = None) -> sqlite3.Connection:
+    """Raw connection factory. For most uses, prefer get_db_connection() context manager."""
     path = db_path or DEFAULT_DB
     conn = sqlite3.connect(str(path))
     conn.row_factory = sqlite3.Row
     # Enable foreign key constraints to ensure cascading deletes work
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+@contextlib.contextmanager
+def get_db_connection(db_path: Optional[Path] = None):
+    """Context manager for database connections."""
+    conn = get_conn(db_path)
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def init_db(db_path: Optional[Path] = None) -> None:
@@ -135,6 +165,8 @@ CREATE TABLE IF NOT EXISTS exam (
     FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE SET NULL
 );
 
+
+
 CREATE TABLE IF NOT EXISTS license (
     id INTEGER PRIMARY KEY,
     trainee_id INTEGER NOT NULL,
@@ -143,53 +175,71 @@ CREATE TABLE IF NOT EXISTS license (
     license_number TEXT,
     status TEXT,
     notes TEXT,
+    license_type TEXT,
+    invoiced INTEGER DEFAULT 0,
     FOREIGN KEY(trainee_id) REFERENCES trainee(id) ON DELETE CASCADE
 );
         """
     )
-    # Ensure rep_code columns exist on existing DBs
-    _ensure_rep_code_columns(db_path)
-    # Ensure practice exam status table exists
+    # Ensure schema is up to date
+    try:
+        _migrate_db(db_path)
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Failed to initialize or migrate database: {e}")
+        raise
+    finally:
+        conn.close()
+
+
+def _migrate_db(db_path: Optional[Path] = None) -> None:
+    """Central entry point for database migrations."""
+    # Table-specific column maps: {column_name: definition}
+    migrations = {
+        "exam": {
+            "module": "TEXT",
+            "is_practice": "INTEGER DEFAULT 0",
+            "passed": "INTEGER",
+            "reimbursement_requested": "INTEGER DEFAULT 0"
+        },
+        "recruiter": {
+            "rep_code": "TEXT"
+        },
+        "trainee": {
+            "rep_code": "TEXT",
+            "rvp_name": "TEXT",
+            "rvp_rep_code": "TEXT"
+        },
+        "license": {
+            "license_type": "TEXT",
+            "invoiced": "INTEGER DEFAULT 0"
+        }
+    }
+
+    logger.info("Starting database migrations...")
+    for table, cols in migrations.items():
+        _ensure_columns(table, cols, db_path)
+
+    # Special table handling
     _ensure_practice_status_table(db_path)
-    conn.commit()
-    conn.close()
 
 
-def _ensure_exam_columns(db_path: Optional[Path] = None) -> None:
-    """Ensure new columns exist on exam table: module, is_practice, passed, reimbursement_requested"""
+def _ensure_columns(table_name: str, column_definitions: Dict[str, str], db_path: Optional[Path] = None) -> None:
+    """Utility to ensure specified columns exist in a table."""
     conn = get_conn(db_path)
     cur = conn.cursor()
-    # SQLite ALTER TABLE ADD COLUMN is safe if column doesn't exist; check via PRAGMA table_info
-    cur.execute("PRAGMA table_info(exam)")
-    cols = {r['name'] for r in cur.fetchall()}
-    if 'module' not in cols:
-        cur.execute("ALTER TABLE exam ADD COLUMN module TEXT")
-    if 'is_practice' not in cols:
-        cur.execute("ALTER TABLE exam ADD COLUMN is_practice INTEGER DEFAULT 0")
-    if 'passed' not in cols:
-        cur.execute("ALTER TABLE exam ADD COLUMN passed INTEGER")
-    if 'reimbursement_requested' not in cols:
-        cur.execute("ALTER TABLE exam ADD COLUMN reimbursement_requested INTEGER DEFAULT 0")
-    conn.commit()
-    conn.close()
+    try:
+        cur.execute(f"PRAGMA table_info({table_name})")
+        existing_cols = {r['name'] for r in cur.fetchall()}
+        for col_name, col_def in column_definitions.items():
+            if col_name not in existing_cols:
+                cur.execute(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_def}")
+        conn.commit()
+    finally:
+        conn.close()
 
 
-def _ensure_rep_code_columns(db_path: Optional[Path] = None) -> None:
-    """Ensure recruiter and trainee tables have a rep_code column for existing DBs."""
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    # recruiter
-    cur.execute("PRAGMA table_info(recruiter)")
-    cols = {r['name'] for r in cur.fetchall()}
-    if 'rep_code' not in cols:
-        cur.execute("ALTER TABLE recruiter ADD COLUMN rep_code TEXT")
-    # trainee
-    cur.execute("PRAGMA table_info(trainee)")
-    cols = {r['name'] for r in cur.fetchall()}
-    if 'rep_code' not in cols:
-        cur.execute("ALTER TABLE trainee ADD COLUMN rep_code TEXT")
-    conn.commit()
-    conn.close()
+
 
 
 def _ensure_practice_status_table(db_path: Optional[Path] = None) -> None:
@@ -320,7 +370,9 @@ def list_recruiters(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
 
 
 def add_trainee(first_name: str, last_name: str, dob: Optional[str] = None,
-                recruiter_id: Optional[int] = None, rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> int:
+                recruiter_id: Optional[int] = None, rep_code: Optional[str] = None, 
+                rvp_name: Optional[str] = None, rvp_rep_code: Optional[str] = None,
+                db_path: Optional[Path] = None) -> int:
     try:
         rc = _validate_rep_code(rep_code)
     except ValueError:
@@ -330,11 +382,15 @@ def add_trainee(first_name: str, last_name: str, dob: Optional[str] = None,
         "last_name": last_name,
         "dob": dob,
         "recruiter_id": recruiter_id,
-        "rep_code": rc
+        "rep_code": rc,
+        "rvp_name": rvp_name,
+        "rvp_rep_code": rvp_rep_code
     }, db_path=db_path)
 
 
-def update_trainee(trainee_id: int, first_name: str, last_name: str, dob: Optional[str], recruiter_id: Optional[int], rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> None:
+def update_trainee(trainee_id: int, first_name: str, last_name: str, dob: Optional[str], recruiter_id: Optional[int], 
+                   rep_code: Optional[str] = None, rvp_name: Optional[str] = None, rvp_rep_code: Optional[str] = None,
+                   db_path: Optional[Path] = None) -> None:
     rc = None
     if rep_code is not None:
         rc = _validate_rep_code(rep_code)
@@ -343,7 +399,9 @@ def update_trainee(trainee_id: int, first_name: str, last_name: str, dob: Option
         "last_name": last_name,
         "dob": dob,
         "recruiter_id": recruiter_id,
-        "rep_code": rc
+        "rep_code": rc,
+        "rvp_name": rvp_name,
+        "rvp_rep_code": rvp_rep_code
     }, db_path=db_path)
 
 def delete_trainee(trainee_id: int, db_path: Optional[Path] = None) -> None:
@@ -353,13 +411,12 @@ def get_trainee(trainee_id: int, db_path: Optional[Path] = None) -> Optional[sql
     return trainee_crud.get(trainee_id, db_path=db_path)
 
 def list_trainees(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT t.*, r.name as recruiter_name FROM trainee t LEFT JOIN recruiter r ON t.recruiter_id = r.id ORDER BY t.last_name, t.first_name"
-    )
-    rows = cur.fetchall()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT t.*, r.name as recruiter_name FROM trainee t LEFT JOIN recruiter r ON t.recruiter_id = r.id ORDER BY t.last_name, t.first_name"
+        )
+        rows = cur.fetchall()
     return rows
 
 
@@ -387,49 +444,48 @@ def list_classes(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
     return class_crud.list(order_by="start_date", db_path=db_path)
 
 
-def add_exam(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], score: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> int:
-    # Ensure we have updated columns
-    _ensure_exam_columns(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("INSERT INTO exam (trainee_id, class_id, exam_date, score, notes) VALUES (?, ?, ?, ?, ?)", (trainee_id, class_id, exam_date, score, notes))
-    conn.commit()
-    eid = cur.lastrowid
-    conn.close()
-    return eid
+def add_exam(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], score: Optional[str], notes: Optional[str], 
+             module: Optional[str] = None, is_practice: bool = False, passed: Optional[bool] = None, 
+             reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> int:
+    return exam_crud.add({
+        "trainee_id": trainee_id,
+        "class_id": class_id,
+        "exam_date": exam_date,
+        "score": score,
+        "notes": notes,
+        "module": module,
+        "is_practice": int(bool(is_practice)),
+        "passed": (1 if passed else (0 if passed is False else None)),
+        "reimbursement_requested": int(bool(reimbursement_requested)),
+    }, db_path=db_path)
 
 
 def update_practice_exam_status(trainee_id: int, module: str, completed: bool, db_path: Optional[Path] = None) -> None:
     """Set the completion flag for a practice exam module for a specific trainee (insert or replace).
     
     When completed=True, sets completed_date to current timestamp.
-    When completed=False, clears the completed_date.
     """
-    _ensure_practice_status_table(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    if completed:
-        cur.execute(
-            "INSERT OR REPLACE INTO practice_exam_status (trainee_id, module, completed, completed_date) VALUES (?, ?, 1, CURRENT_TIMESTAMP)",
-            (trainee_id, module)
-        )
-    else:
-        cur.execute(
-            "INSERT OR REPLACE INTO practice_exam_status (trainee_id, module, completed, completed_date) VALUES (?, ?, 0, NULL)",
-            (trainee_id, module)
-        )
-    conn.commit()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        if completed:
+            cur.execute(
+                "INSERT OR REPLACE INTO practice_exam_status (trainee_id, module, completed, completed_date) VALUES (?, ?, 1, CURRENT_TIMESTAMP)",
+                (trainee_id, module)
+            )
+        else:
+            cur.execute(
+                "INSERT OR REPLACE INTO practice_exam_status (trainee_id, module, completed, completed_date) VALUES (?, ?, 0, NULL)",
+                (trainee_id, module)
+            )
+        conn.commit()
 
 
 def get_practice_exam_status(trainee_id: int, module: str, db_path: Optional[Path] = None) -> bool:
     """Return True if the module is marked complete for the trainee in the practice_exam_status table."""
-    _ensure_practice_status_table(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT completed FROM practice_exam_status WHERE trainee_id = ? AND module = ?", (trainee_id, module))
-    row = cur.fetchone()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT completed FROM practice_exam_status WHERE trainee_id = ? AND module = ?", (trainee_id, module))
+        row = cur.fetchone()
     if not row:
         return False
     try:
@@ -438,78 +494,61 @@ def get_practice_exam_status(trainee_id: int, module: str, db_path: Optional[Pat
         return bool(row[0])
 
 
-def get_practice_exam_status_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> dict:
-    """Return a mapping module -> bool for all practice exam statuses for a specific trainee."""
-    _ensure_practice_status_table(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT module, completed FROM practice_exam_status WHERE trainee_id = ?", (trainee_id,))
-    rows = cur.fetchall()
-    conn.close()
+def get_practice_exam_status_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> Dict[str, bool]:
+    """Return a dictionary mapping module names to completion status (True/False)."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT module, completed FROM practice_exam_status WHERE trainee_id = ?", (trainee_id,))
+        rows = cur.fetchall()
     return {r['module']: bool(r['completed']) for r in rows}
 
 
 def reset_practice_exam_statuses_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> None:
     """Reset all practice exam statuses to incomplete (0) for a specific trainee."""
-    _ensure_practice_status_table(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("UPDATE practice_exam_status SET completed = 0, completed_date = NULL WHERE trainee_id = ?", (trainee_id,))
-    conn.commit()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE practice_exam_status SET completed = 0, completed_date = NULL WHERE trainee_id = ?", (trainee_id,))
+        conn.commit()
 
 
 def get_practice_module_completion_date(trainee_id: int, module: str, db_path: Optional[Path] = None) -> Optional[str]:
     """Return the completion date (ISO format string) for a practice exam module, or None if not completed."""
-    _ensure_practice_status_table(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT completed_date FROM practice_exam_status WHERE trainee_id = ? AND module = ? AND completed = 1",
-        (trainee_id, module)
-    )
-    row = cur.fetchone()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT completed_date FROM practice_exam_status WHERE trainee_id = ? AND module = ? AND completed = 1",
+            (trainee_id, module)
+        )
+        row = cur.fetchone()
     if not row:
         return None
     return row['completed_date']
 
 
-def get_all_practice_module_completion_dates(trainee_id: int, db_path: Optional[Path] = None) -> dict:
-    """Return a mapping module -> completion_date (ISO format string) for all completed modules."""
-    _ensure_practice_status_table(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT module, completed_date FROM practice_exam_status WHERE trainee_id = ? AND completed = 1",
-        (trainee_id,)
-    )
-    rows = cur.fetchall()
-    conn.close()
+def get_all_practice_module_completion_dates(trainee_id: int, db_path: Optional[Path] = None) -> Dict[str, str]:
+    """Return a map of module -> completion_date (ISO string)."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT module, completed_date FROM practice_exam_status WHERE trainee_id = ? AND completed = 1",
+            (trainee_id,)
+        )
+        rows = cur.fetchall()
     return {r['module']: r['completed_date'] for r in rows if r['completed_date']}
 
 
-def add_exam_v2(trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> int:
-    return exam_crud.add({
-        "trainee_id": trainee_id,
-        "class_id": class_id,
-        "exam_date": exam_date,
-        "module": module,
-        "is_practice": int(bool(is_practice)),
-        "passed": (1 if passed else (0 if passed is False else None)),
-        "notes": notes,
-        "reimbursement_requested": int(bool(reimbursement_requested)),
-    }, db_path=db_path)
-
-def update_exam(exam_id: int, trainee_id: int, class_id: Optional[int], exam_date: Optional[str], module: Optional[str], is_practice: bool, passed: Optional[bool], notes: Optional[str], reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> None:
+def update_exam(exam_id: int, trainee_id: int, class_id: Optional[int], exam_date: Optional[str], score: Optional[str], notes: Optional[str],
+                module: Optional[str] = None, is_practice: bool = False, passed: Optional[bool] = None, 
+                reimbursement_requested: bool = False, db_path: Optional[Path] = None) -> None:
     exam_crud.update(exam_id, {
         "trainee_id": trainee_id,
         "class_id": class_id,
         "exam_date": exam_date,
+        "score": score,
+        "notes": notes,
         "module": module,
         "is_practice": int(bool(is_practice)),
         "passed": (1 if passed else (0 if passed is False else None)),
-        "notes": notes,
         "reimbursement_requested": int(bool(reimbursement_requested)),
     }, db_path=db_path)
 
@@ -520,33 +559,39 @@ def get_exam(exam_id: int, db_path: Optional[Path] = None) -> Optional[sqlite3.R
     return exam_crud.get(exam_id, db_path=db_path)
 
 def list_exams(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    _ensure_exam_columns(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT e.*, t.first_name, t.last_name, c.name as class_name FROM exam e JOIN trainee t ON e.trainee_id = t.id LEFT JOIN class c ON e.class_id = c.id ORDER BY e.exam_date DESC")
-    rows = cur.fetchall()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT e.*, t.first_name, t.last_name, c.name as class_name FROM exam e JOIN trainee t ON e.trainee_id = t.id LEFT JOIN class c ON e.class_id = c.id ORDER BY e.exam_date DESC")
+        rows = cur.fetchall()
     return rows
 
 
-def add_license(trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], license_number: Optional[str], status: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> int:
+def add_license(trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], 
+                license_number: Optional[str], status: Optional[str], notes: Optional[str], 
+                license_type: Optional[str] = None, invoiced: bool = False, db_path: Optional[Path] = None) -> int:
     return license_crud.add({
         "trainee_id": trainee_id,
         "application_submitted_date": application_submitted_date,
         "approval_date": approval_date,
         "license_number": license_number,
         "status": status,
-        "notes": notes
+        "notes": notes,
+        "license_type": license_type,
+        "invoiced": 1 if invoiced else 0
     }, db_path=db_path)
 
-def update_license(license_id: int, trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], license_number: Optional[str], status: Optional[str], notes: Optional[str], db_path: Optional[Path] = None) -> None:
+def update_license(license_id: int, trainee_id: int, application_submitted_date: Optional[str], approval_date: Optional[str], 
+                   license_number: Optional[str], status: Optional[str], notes: Optional[str],
+                   license_type: Optional[str] = None, invoiced: bool = False, db_path: Optional[Path] = None) -> None:
     license_crud.update(license_id, {
         "trainee_id": trainee_id,
         "application_submitted_date": application_submitted_date,
         "approval_date": approval_date,
         "license_number": license_number,
         "status": status,
-        "notes": notes
+        "notes": notes,
+        "license_type": license_type,
+        "invoiced": 1 if invoiced else 0
     }, db_path=db_path)
 
 def delete_license(license_id: int, db_path: Optional[Path] = None) -> None:
@@ -556,91 +601,77 @@ def get_license(license_id: int, db_path: Optional[Path] = None) -> Optional[sql
     return license_crud.get(license_id, db_path=db_path)
 
 def list_licenses(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT l.*, t.first_name, t.last_name FROM license l JOIN trainee t ON l.trainee_id = t.id ORDER BY l.application_submitted_date DESC")
-    rows = cur.fetchall()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT l.*, t.first_name, t.last_name FROM license l JOIN trainee t ON l.trainee_id = t.id ORDER BY l.application_submitted_date DESC")
+        rows = cur.fetchall()
     return rows
 
 
-def practice_exams_complete(trainee_id: int, required_count: int = 4, db_path: Optional[Path] = None) -> bool:
-    """Return True if trainee has at least `required_count` practice exams marked as passed."""
-    _ensure_exam_columns(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM exam WHERE trainee_id = ? AND is_practice = 1 AND passed = 1", (trainee_id,))
-    cnt = cur.fetchone()[0]
-    conn.close()
-    return cnt >= required_count
+def get_practice_module_completion_count(trainee_id: int, required_modules: List[str], db_path: Optional[Path] = None) -> int:
+    """Return count of required practice modules marked as complete for the trainee."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        # Create dynamic placeholder string
+        placeholders = ', '.join(['?'] * len(required_modules))
+        query = f"SELECT COUNT(*) FROM practice_exam_status WHERE trainee_id = ? AND module IN ({placeholders}) AND completed = 1"
+        cur.execute(query, (trainee_id, *required_modules))
+        cnt = cur.fetchone()[0]
+    return cnt
+
+def get_passed_practice_exam_count(trainee_id: int, db_path: Optional[Path] = None) -> int:
+    """Return count of practice exams marked as passed in the exam table."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM exam WHERE trainee_id = ? AND is_practice = 1 AND passed = 1", (trainee_id,))
+        cnt = cur.fetchone()[0]
+    return cnt
 
 
-def all_practice_modules_marked_complete(trainee_id: int, db_path: Optional[Path] = None) -> bool:
-    """Return True if all 4 practice exam modules (Life, A&S, Seg Funds, Ethics) are marked complete for the trainee."""
-    _ensure_practice_status_table(db_path)
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    required_modules = ["Life", "A&S", "Seg Funds", "Ethics"]
-    cur.execute("SELECT COUNT(*) FROM practice_exam_status WHERE trainee_id = ? AND module IN (?, ?, ?, ?) AND completed = 1", 
-                (trainee_id, required_modules[0], required_modules[1], required_modules[2], required_modules[3]))
-    cnt = cur.fetchone()[0]
-    conn.close()
-    return cnt == len(required_modules)
 
 
-def check_seewhy_guarantee(trainee_id: int, first_provincial_exam_date: Optional[str], db_path: Optional[Path] = None) -> bool:
-    """Check if trainee qualifies for SeeWhy Guarantee.
-    
-    A trainee qualifies if all 4 practice exam modules (Life, A&S, Seg Funds, Ethics) 
-    were completed before their first provincial exam date.
-    
-    Args:
-        trainee_id: The ID of the trainee
-        first_provincial_exam_date: ISO format date string of first provincial exam (e.g., "2024-01-15")
-        db_path: Optional path to the database file
-    
-    Returns:
-        True if all 4 modules were completed before the provincial exam date, False otherwise.
-        Returns False if first_provincial_exam_date is None.
-    """
-    if not first_provincial_exam_date:
-        return False
-    
-    completion_dates = get_all_practice_module_completion_dates(trainee_id, db_path)
-    required_modules = ["Life", "A&S", "Seg Funds", "Ethics"]
-    
-    # Check if all required modules are in completion_dates
-    if len(completion_dates) < len(required_modules):
-        return False
-    
-    # Check if all modules are in the dict
-    for module in required_modules:
-        if module not in completion_dates:
-            return False
-    
-    # Check if all completion dates are before the provincial exam date
-    for module in required_modules:
-        completion_date = completion_dates[module]
-        if not completion_date:
-            return False
-        # Compare as strings (ISO format sorts correctly lexicographically)
-        if completion_date.split('T')[0] >= first_provincial_exam_date:
-            return False
-    
-    return True
 
+def update_license_invoice_status(license_id: int, invoiced: bool, db_path: Optional[Path] = None) -> None:
+    """Update only the invoice status of a license."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE license SET invoiced = ? WHERE id = ?", (1 if invoiced else 0, license_id))
+        conn.commit()
+
+def get_rvp_invoice_summary(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
+    """Get all licenses with RVP info for invoice display."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        sql = """
+            SELECT l.id as license_id, l.license_type, l.invoiced,
+                   t.first_name, t.last_name, t.rvp_name, t.rvp_rep_code 
+            FROM license l
+            JOIN trainee t ON l.trainee_id = t.id
+            WHERE t.rvp_name IS NOT NULL AND t.rvp_name != ''
+            ORDER BY t.rvp_name, t.last_name, t.first_name
+        """
+        cur.execute(sql)
+        rows = cur.fetchall()
+    return rows
+
+def list_unique_rvps(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
+    """Get list of unique RVPs (name, rep_code) from existing trainees."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT DISTINCT rvp_name, rvp_rep_code FROM trainee WHERE rvp_name IS NOT NULL AND rvp_name != '' ORDER BY rvp_name")
+        rows = cur.fetchall()
+    return rows
 
 def get_license_info_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> Optional[dict]:
     """Retrieve license information for a specific trainee."""
-    conn = get_conn(db_path)
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT application_submitted_date, approval_date, license_number, status "
-        "FROM license WHERE trainee_id = ? ORDER BY application_submitted_date DESC LIMIT 1",
-        (trainee_id,)
-    )
-    row = cur.fetchone()
-    conn.close()
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT application_submitted_date, approval_date, license_number, status, license_type, invoiced "
+            "FROM license WHERE trainee_id = ? ORDER BY application_submitted_date DESC LIMIT 1",
+            (trainee_id,)
+        )
+        row = cur.fetchone()
     if not row:
         return None
     return {
@@ -648,6 +679,8 @@ def get_license_info_for_trainee(trainee_id: int, db_path: Optional[Path] = None
         "approval_date": row["approval_date"],
         "license_number": row["license_number"],
         "status": row["status"],
+        "license_type": row["license_type"],
+        "invoiced": bool(row["invoiced"])
     }
 # Example usage for recruiter CRUD
 recruiter_crud = CRUDHelper("recruiter")

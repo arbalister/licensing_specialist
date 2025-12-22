@@ -407,3 +407,398 @@ ImportError: cannot import name 'create_form_section' from 'licensing_specialist
 2025-11-19 20:09:00,625 INFO root - Starting Licensing Specialist GUI
 2025-11-22 15:59:22,562 INFO root - Starting Licensing Specialist GUI
 2025-11-22 16:02:28,030 INFO root - Starting Licensing Specialist GUI
+2025-12-08 18:16:56,409 INFO root - Starting Licensing Specialist GUI
+2025-12-08 18:54:09,502 INFO root - Starting Licensing Specialist GUI
+2025-12-08 18:59:47,938 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:02:03,505 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:02:03,506 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: name 'contextlib' is not defined
+2025-12-08 19:07:07,000 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:10:51,697 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:13:48,653 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:30:57,531 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:37:12,972 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:39:36,939 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:44:34,642 INFO root - Starting Licensing Specialist GUI
+2025-12-08 19:46:17,842 INFO root - Starting Licensing Specialist GUI
+2025-12-12 15:00:28,711 INFO root - Starting Licensing Specialist GUI
+2025-12-12 15:00:28,713 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: No module named 'PySide6'
+2025-12-12 15:02:24,730 INFO root - Starting Licensing Specialist GUI
+2025-12-12 15:02:24,730 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: No module named 'PySide6'
+2025-12-12 15:04:01,016 INFO root - Starting Licensing Specialist GUI
+2025-12-21 15:32:46,588 INFO root - Starting Licensing Specialist GUI
+2025-12-21 15:56:26,430 INFO root - Starting Licensing Specialist GUI
+2025-12-21 15:56:26,430 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: cannot import name 'QStringListModel' from 'PySide6.QtGui' (/home/chanlon/code_projects/python/licensing_specialist/.venv/lib/python3.13/site-packages/PySide6/QtGui.abi3.so)
+2025-12-21 15:59:39,340 INFO root - Starting Licensing Specialist GUI
+2025-12-21 15:59:39,340 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: cannot import name '_load_icon' from 'licensing_specialist.widgets' (/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/widgets.py)
+2025-12-21 16:01:03,278 INFO root - Starting Licensing Specialist GUI
+2025-12-21 16:05:25,499 INFO root - Starting Licensing Specialist GUI
+2025-12-21 16:19:36,569 INFO root - Starting Licensing Specialist GUI
+2025-12-21 16:19:36,665 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 116, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 32, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 63, in _build
+    setup_recruiter_tab(self)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 168, in setup_recruiter_tab
+    tab = RecruiterTab(main_window)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 14, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 71, in _build_ui
+    right.addWidget(create_section_header("Details"))
+                    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/widgets.py", line 25, in create_section_header
+    label.setStyleSheet(SECTION_HEADER_STYLE)
+                        ^^^^^^^^^^^^^^^^^^^^
+NameError: name 'SECTION_HEADER_STYLE' is not defined
+2025-12-21 16:21:02,541 INFO root - Starting Licensing Specialist GUI
+2025-12-21 16:53:30,933 INFO root - Starting Licensing Specialist GUI
+2025-12-21 16:53:30,995 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 16:53:32,480 ERROR licensing_specialist.services - Error getting practice summary for trainee 4: name 'REQUIRED_PRACTICE_MODULES' is not defined
+2025-12-21 16:53:32,541 ERROR licensing_specialist.services - Error getting practice summary for trainee 4: name 'REQUIRED_PRACTICE_MODULES' is not defined
+2025-12-21 16:53:32,541 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/services.py", line 38, in forms_practice_summary
+    return {mod: status.get(mod, False) for mod in REQUIRED_PRACTICE_MODULES}
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'REQUIRED_PRACTICE_MODULES' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 120, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 33, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 68, in _build
+    setup_exam_tab(self)
+    ~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 221, in setup_exam_tab
+    tab = ExamTab(main_window)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 18, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 78, in _build_ui
+    self.refresh()
+    ~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 83, in refresh
+    self._update_prov_exam_info()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 134, in _update_prov_exam_info
+    status = services.forms_practice_summary(tid)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/services.py", line 41, in forms_practice_summary
+    return {mod: False for mod in REQUIRED_PRACTICE_MODULES}
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'REQUIRED_PRACTICE_MODULES' is not defined
+2025-12-21 16:55:15,197 INFO root - Starting Licensing Specialist GUI
+2025-12-21 16:55:15,228 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 17:01:36,363 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:01:36,364 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: cannot import name 'CARD_STYLE' from 'licensing_specialist.styles' (/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/styles.py)
+2025-12-21 17:03:02,410 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:03:02,941 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 17:03:04,283 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 137, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 78, in _build
+    setup_license_tab(self)
+    ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 303, in setup_license_tab
+    tab = LicenseTab(self)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 23, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 78, in _build_ui
+    self.refresh()
+    ~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 82, in refresh
+    self._refresh_licenses()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 186, in _refresh_licenses
+    label = QLabel(f"{l['id']}: {l['last_name']}, {l['first_name']} - {l['application_submitted_date'] or '—'}{ltype}{inv}")
+            ^^^^^^
+NameError: name 'QLabel' is not defined
+2025-12-21 17:04:20,306 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:04:20,758 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 17:04:21,854 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 137, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 78, in _build
+    setup_license_tab(self)
+    ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 303, in setup_license_tab
+    tab = LicenseTab(self)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 23, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 78, in _build_ui
+    self.refresh()
+    ~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 82, in refresh
+    self._refresh_licenses()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 186, in _refresh_licenses
+    label = QLabel(f"{l['id']}: {l['last_name']}, {l['first_name']} - {l['application_submitted_date'] or '—'}{ltype}{inv}")
+            ^^^^^^
+NameError: name 'QLabel' is not defined
+2025-12-21 17:05:22,662 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:05:22,682 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 17:14:45,135 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:14:45,188 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 17:14:45,752 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 137, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 77, in _build
+    setup_exam_tab(self)
+    ~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 234, in setup_exam_tab
+    tab = ExamTab(main_window)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 22, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 91, in _build_ui
+    self.refresh()
+    ~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 96, in refresh
+    self._update_prov_exam_info()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/exam_tab.py", line 139, in _update_prov_exam_info
+    for mod in self.practice_status_labels:
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ExamTab' object has no attribute 'practice_status_labels'. Did you mean: 'practice_status_containers'?
+2025-12-21 17:16:22,787 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:16:22,808 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 17:16:23,591 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 137, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 78, in _build
+    setup_license_tab(self)
+    ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 305, in setup_license_tab
+    tab = LicenseTab(self)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 23, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 59, in _build_ui
+    add_btn.setIcon(_load_icon("add"))
+                    ^^^^^^^^^^
+NameError: name '_load_icon' is not defined
+2025-12-21 17:17:49,749 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:17:49,771 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 17:48:38,304 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:48:38,305 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: name 'Any' is not defined
+2025-12-21 17:54:44,705 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:54:44,705 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: name 'Any' is not defined
+2025-12-21 17:55:56,817 INFO root - Starting Licensing Specialist GUI
+2025-12-21 17:55:56,817 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: name 'Any' is not defined
+2025-12-21 18:04:29,394 INFO root - Starting Licensing Specialist GUI
+2025-12-21 18:04:29,462 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 18:04:29,587 ERROR licensing_specialist.services - Error getting dashboard stats: name 'active_classes' is not defined
+2025-12-21 18:04:29,587 ERROR licensing_specialist.services - Error getting module stats: no such column: module_name
+2025-12-21 18:41:26,062 INFO root - Starting Licensing Specialist GUI
+2025-12-21 18:41:26,076 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 18:41:26,112 ERROR licensing_specialist.services - Error getting module stats: no such column: module_name
+2025-12-21 18:47:36,321 INFO root - Starting Licensing Specialist GUI
+2025-12-21 18:47:36,349 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 18:50:40,207 INFO root - Starting Licensing Specialist GUI
+2025-12-21 18:50:40,250 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 18:53:28,768 INFO root - Starting Licensing Specialist GUI
+2025-12-21 18:53:28,788 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:17:42,201 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:17:42,622 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:17:43,408 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 137, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 74, in _build
+    setup_recruiter_tab(self)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 214, in setup_recruiter_tab
+    tab = RecruiterTab(main_window)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 22, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 27, in _build_ui
+    self.rec_name = QComboBox() # Changed to ComboBox
+                    ^^^^^^^^^
+NameError: name 'QComboBox' is not defined
+2025-12-21 19:20:00,743 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:20:00,743 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: No module named 'PySide6'
+2025-12-21 19:20:38,484 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:20:38,494 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:25:42,805 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:25:42,823 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:26:43,378 INFO licensing_specialist.db - Deleted record from recruiter with ID 8
+2025-12-21 19:34:40,950 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:34:40,979 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:38:03,875 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:38:03,897 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:38:04,207 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 137, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 74, in _build
+    setup_recruiter_tab(self)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 214, in setup_recruiter_tab
+    tab = RecruiterTab(main_window)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 22, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 76, in _build_ui
+    self.refresh()
+    ~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 79, in refresh
+    self._refresh_recruiters()
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/recruiter_tab.py", line 100, in _refresh_recruiters
+    setup_searchable_combobox(self.rec_name, rec_items, self._on_rec_name_selected)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/widgets.py", line 186, in setup_searchable_combobox
+    if combobox.receivers(combobox.textActivated) > 0:
+       ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'PySide6.QtCore.QObject.receivers' called with wrong argument types:
+  PySide6.QtCore.QObject.receivers(SignalInstance)
+Supported signatures:
+  PySide6.QtCore.QObject.receivers(signal: str, /)
+2025-12-21 19:39:30,225 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:39:30,256 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:52:53,641 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:52:54,031 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 19:54:59,737 INFO root - Starting Licensing Specialist GUI
+2025-12-21 19:54:59,755 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:04:36,690 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:04:36,761 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:15:46,334 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:15:46,407 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:20:46,513 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:20:46,521 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:21:14,331 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:21:14,338 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:32:33,988 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:32:34,017 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:36:16,096 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:36:16,385 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:38:24,599 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:38:24,619 INFO licensing_specialist.db - Starting database migrations...
+2025-12-21 20:41:34,971 INFO root - Starting Licensing Specialist GUI
+2025-12-21 20:41:35,007 INFO licensing_specialist.db - Starting database migrations...

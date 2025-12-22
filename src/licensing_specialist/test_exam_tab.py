@@ -263,13 +263,16 @@ def test_practice_exam_status_integration():
     try:
         db.init_db(db_path)
         
+        # Add a placeholder trainee to satisfy FK constraints
+        trainee_id = db.add_trainee("Test", "User", db_path=db_path)
+
         # Test practice exam status
-        assert db.get_practice_exam_status('Life', db_path) is False
+        assert db.get_practice_exam_status(trainee_id, 'Life', db_path) is False
         
-        db.update_practice_exam_status('Life', True, db_path)
-        assert db.get_practice_exam_status('Life', db_path) is True
+        db.update_practice_exam_status(trainee_id, 'Life', True, db_path)
+        assert db.get_practice_exam_status(trainee_id, 'Life', db_path) is True
         
-        status_dict = db.list_practice_exam_status(db_path)
+        status_dict = db.get_practice_exam_status_for_trainee(trainee_id, db_path)
         assert 'Life' in status_dict
         assert status_dict['Life'] is True
         

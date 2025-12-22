@@ -41,8 +41,11 @@ def main():
             root.withdraw()
             tb = traceback.format_exc()
             messagebox.showerror(
-                "Application Error",
-                f"An unexpected error occurred and the application must close.\n\nA log was written to: {LOG_FILE}\n\nError:\n{exc}",
+                "Fatal Application Error",
+                f"An unexpected error occurred and the application must close.\n\n"
+                f"Error: {exc}\n\n"
+                f"A detailed error report and traceback have been written to the log file:\n{LOG_FILE}\n\n"
+                f"Please provide this log file to support if the issue persists."
             )
             root.destroy()
         except Exception:

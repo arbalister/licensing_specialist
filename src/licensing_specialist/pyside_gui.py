@@ -62,10 +62,12 @@ class MainWindow(QMainWindow):
         theme_act.setShortcut(QKeySequence("Ctrl+T"))
         theme_act.triggered.connect(self._toggle_theme)
         
-        tb.addAction(add_act)
-        tb.addAction(edit_act)
-        tb.addAction(del_act)
-        tb.addSeparator()
+        # Add actions to main window to preserve shortcuts
+        self.addAction(add_act)
+        self.addAction(edit_act)
+        self.addAction(del_act)
+        
+        # Only add Theme button to toolbar
         tb.addAction(theme_act)
         self.addToolBar(tb)
 

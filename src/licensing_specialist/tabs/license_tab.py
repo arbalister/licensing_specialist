@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox, QPushButton, 
     QListWidget, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QAbstractItemView, QHeaderView, 
-    QDialog, QFormLayout, QMessageBox, QCheckBox, QLabel, QFileDialog
+    QDialog, QFormLayout, QMessageBox, QCheckBox, QLabel, QFileDialog, QSplitter
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence
@@ -27,7 +27,11 @@ class LicenseTab(QWidget):
 
     def _build_ui(self) -> None:
         l = QHBoxLayout(self)
-        # Form
+        
+        # --- Left Side: Form ---
+        left_container = QWidget()
+        left = QVBoxLayout(left_container)
+        
         self.lic_trainee = QComboBox()
         self.lic_trainee.currentIndexChanged.connect(self._update_license_trainee_info)
         self.lic_type = QComboBox()
@@ -44,19 +48,29 @@ class LicenseTab(QWidget):
         self.lic_rvp_name = QLineEdit()
         self.lic_rvp_rep_code = QLineEdit()
         
-        form_fields = [
+        # License Details Section
+        left.addWidget(create_section_header("License Details"))
+        lic_fields = [
             ("Trainee", self.lic_trainee),
             ("License Type", self.lic_type),
-            ("Application date", self.lic_app),
-            ("Approval date", self.lic_approval),
-            ("License number", self.lic_number),
+            ("App. Date", self.lic_app),
+            ("Appr. Date", self.lic_approval),
+            ("License #", self.lic_number),
             ("Status", self.lic_status),
-            ("Select Existing RVP", self.lic_existing_rvp),
-            ("RVP Name", self.lic_rvp_name),
-            ("RVP Rep Code", self.lic_rvp_rep_code),
         ]
-        left = create_form_section(form_fields)
+        left.addLayout(create_form_section(lic_fields))
         
+        # RVP Section
+        left.addSpacing(10)
+        left.addWidget(create_section_header("RVP Assignment"))
+        rvp_fields = [
+            ("Existing RVP", self.lic_existing_rvp),
+            ("RVP Name", self.lic_rvp_name),
+            ("Rep Code", self.lic_rvp_rep_code),
+        ]
+        left.addLayout(create_form_section(rvp_fields))
+        
+        left.addSpacing(20)
         btns_layout = QHBoxLayout()
         add_btn = QPushButton("Add License")
         add_btn.setIcon(_load_icon("add"))
@@ -72,26 +86,184 @@ class LicenseTab(QWidget):
         btns_layout.addWidget(inv_btn)
         btns_layout.addWidget(exp_btn)
         left.addLayout(btns_layout)
+        left.addStretch()
         
-        l.addLayout(left, 1)
-        right = QVBoxLayout()
+        # --- Middle Side: Splitter for List and RVP Info ---
+        right_splitter = QSplitter(Qt.Orientation.Vertical)
+        
+        # Top: License List
+        list_container = QWidget()
+        list_layout = QVBoxLayout(list_container)
+        
+        # Search & Filter Box
+        filter_layout = QHBoxLayout()
+        self.lic_search = QLineEdit()
+        self.lic_search.setPlaceholderText("Search trainee or license number...")
+        self.lic_search.setClearButtonEnabled(True)
+        self.lic_search.textChanged.connect(self._refresh_licenses)
+        
+        self.type_filter = QComboBox()
+        self.type_filter.addItems(["All Types", "Life", "Mutual Funds"])
+        self.type_filter.currentIndexChanged.connect(self._refresh_licenses)
+        
+        clear_btn = QPushButton()
+        clear_btn.setIcon(_load_icon("delete"))
+        clear_btn.setToolTip("Clear all filters")
+        clear_btn.clicked.connect(self._clear_filters)
+        
+        search_icon = QLabel()
+        search_icon.setPixmap(_load_icon("search").pixmap(16, 16))
+        
+        filter_layout.addWidget(search_icon)
+        filter_layout.addWidget(self.lic_search, 3)
+        filter_layout.addWidget(self.type_filter, 1)
+        filter_layout.addWidget(clear_btn)
+        list_layout.addLayout(filter_layout)
+        
+        # List
         self.lic_list = QListWidget()
         self.lic_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.lic_list.itemSelectionChanged.connect(self._on_lic_select)
-        right.addWidget(create_section_header("Licenses"))
-        right.addWidget(self.lic_list)
-        lic_btns = create_button_row([
-            ("Edit", self._edit_license, "edit"),
-            ("Delete", self._delete_selected_license, "delete"),
-        ])
-        right.addLayout(lic_btns)
-        l.addLayout(right, 2)
+        list_layout.addWidget(create_section_header("Licenses"))
+        list_layout.addWidget(self.lic_list)
+        
+        edit_btn = QPushButton("Edit")
+        edit_btn.setIcon(_load_icon("edit"))
+        edit_btn.clicked.connect(self._edit_license)
+        edit_btn.setEnabled(False)
+        self.btn_edit = edit_btn
+        
+        del_btn = QPushButton("Delete")
+        del_btn.setIcon(_load_icon("delete"))
+        del_btn.clicked.connect(self._delete_selected_license)
+        del_btn.setEnabled(False)
+        self.btn_delete = del_btn
+        
+        lic_btns = QHBoxLayout()
+        lic_btns.addWidget(edit_btn)
+        lic_btns.addWidget(del_btn)
+        list_layout.addLayout(lic_btns)
+        
+        right_splitter.addWidget(list_container)
+        
+        # Bottom: RVP Panel (Split horizontally for Tree and Profile)
+        bottom_container = QWidget()
+        bottom_layout = QHBoxLayout(bottom_container)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        
+        rvp_tree_container = QWidget()
+        rvp_tree_layout = QVBoxLayout(rvp_tree_container)
+        rvp_tree_layout.addWidget(create_section_header("Select RVP"))
+        self.rvp_tree = QTreeWidget()
+        self.rvp_tree.setHeaderLabels(["RVP", "Total"])
+        self.rvp_tree.setAlternatingRowColors(True)
+        self.rvp_tree.itemSelectionChanged.connect(self._on_rvp_select)
+        self.rvp_tree.itemDoubleClicked.connect(self._on_rvp_double_click)
+        rvp_tree_layout.addWidget(self.rvp_tree)
+        
+        from ..widgets import ModernProfileView
+        self.rvp_profile = ModernProfileView()
+        
+        bottom_layout.addWidget(rvp_tree_container, 1)
+        bottom_layout.addWidget(self.rvp_profile, 2)
+        
+        right_splitter.addWidget(bottom_container)
+        right_splitter.setStretchFactor(0, 3) # List takes more space
+        right_splitter.setStretchFactor(1, 2)
+        
+        l.addWidget(left_container, 2)
+        l.addWidget(right_splitter, 3)
         
         self.refresh()
 
+
+
     def refresh(self):
         self._refresh_license_dropdowns()
+        self._refresh_rvp_panel()
         self._refresh_licenses()
+
+    def _clear_filters(self):
+        self.lic_search.clear()
+        self.type_filter.setCurrentIndex(0)
+        self.rvp_tree.setCurrentItem(self.rvp_tree.topLevelItem(0))
+        self._refresh_licenses()
+
+    def _refresh_rvp_panel(self) -> None:
+        self.rvp_tree.clear()
+        stats = db.get_rvp_stats()
+        
+        # Add "All RVPs" item
+        all_item = QTreeWidgetItem(self.rvp_tree, ["All RVPs", ""])
+        all_item.setData(0, Qt.UserRole, "ALL")
+        
+        for s in stats:
+            name = f"{s['rvp_name']} ({s['rvp_rep_code'] or '—'})"
+            item = QTreeWidgetItem(self.rvp_tree, [
+                name,
+                str(s['total_licenses'] or 0)
+            ])
+            item.setTextAlignment(1, Qt.AlignmentFlag.AlignCenter)
+            item.setData(0, Qt.UserRole, (s['rvp_name'], s['rvp_rep_code']))
+            # Store full stats in the item for quick profile access
+            item.setData(1, Qt.UserRole, s)
+        
+        self.rvp_tree.setCurrentItem(all_item)
+
+    def _on_rvp_select(self) -> None:
+        self._refresh_licenses()
+        self._update_rvp_profile()
+
+    def _update_rvp_profile(self) -> None:
+        self.rvp_profile.clear()
+        sel_items = self.rvp_tree.selectedItems()
+        if not sel_items:
+            self.rvp_profile.add_header("No RVP Selected")
+            return
+            
+        data = sel_items[0].data(0, Qt.UserRole)
+        if data == "ALL":
+            self.rvp_profile.add_header("All RVPs View", "Select an individual RVP for detailed info.")
+            return
+            
+        name_code = data
+        if not isinstance(name_code, (tuple, list)):
+             self.rvp_profile.add_header("All RVPs View", "Select an individual RVP for detailed info.")
+             return
+             
+        name, code = name_code
+        stats = sel_items[0].data(1, Qt.UserRole)
+        
+        self.rvp_profile.add_header(name, f"Rep Code: {code or '—'}")
+        
+        metrics = [
+            ("Issued Licenses", str(stats['issued_count']), "check"),
+            ("Pending Licenses", str(stats['pending_count']), "history"),
+            ("Invoiced", str(stats['invoiced_count']), "box"),
+            ("Total Records", str(stats['total_licenses']), "list"),
+        ]
+        self.rvp_profile.add_section("Performance Summary", metrics)
+        
+        # Trainees list
+        trainees = db.get_trainees_by_rvp(name, code)
+        if trainees:
+            tr_names = [f"{t['first_name']} {t['last_name']}" for t in trainees]
+            self.rvp_profile.add_section("Assigned Trainees", [("", n, "user") for n in tr_names])
+        
+        # Action
+        view_inv_btn = QPushButton(f"View Invoices for {name}")
+        view_inv_btn.setIcon(_load_icon("box"))
+        view_inv_btn.clicked.connect(lambda: self._show_rvp_invoices(filter_rvp=(name, code)))
+        self.rvp_profile.add_custom_widget(view_inv_btn)
+
+    def _on_rvp_double_click(self, item: QTreeWidgetItem, column: int) -> None:
+        data = item.data(0, Qt.UserRole)
+        if data == "ALL":
+            self._show_rvp_invoices()
+            return
+        
+        name, code = data
+        self._show_rvp_invoices(filter_rvp=(name, code))
 
     def _on_existing_rvp_select(self) -> None:
         text = self.lic_existing_rvp.currentText()
@@ -138,7 +310,9 @@ class LicenseTab(QWidget):
             log_and_show_error(self, "Error", "Failed to add license", exc)
         self.refresh()
 
-    def _show_rvp_invoices(self) -> None:
+    def _show_rvp_invoices(self, filter_rvp=None) -> None:
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem, QCheckBox
+        from PySide6.QtCore import Qt
         dlg = QDialog(self)
         dlg.setWindowTitle("RVP Invoices")
         dlg.resize(800, 600)
@@ -152,6 +326,10 @@ class LicenseTab(QWidget):
         rows = db.get_rvp_invoice_summary()
         rvp_map = {}
         for r in rows:
+            if filter_rvp:
+                if (r['rvp_name'], r['rvp_rep_code']) != filter_rvp:
+                    continue
+
             rvp_key = (r['rvp_name'], r['rvp_rep_code'] or "")
             if rvp_key not in rvp_map:
                 rvp_item = QTreeWidgetItem(tree, [f"RVP: {r['rvp_name']} ({r['rvp_rep_code'] or '—'})"])
@@ -178,24 +356,57 @@ class LicenseTab(QWidget):
     def _refresh_license_dropdowns(self) -> None:
         trainees = db.list_trainees()
         tr_items = [f"{t['id']}: {t['last_name']}, {t['first_name']}" for t in trainees]
-        setup_searchable_combobox(self.lic_trainee, tr_items, lambda _: self._update_license_trainee_info())
+        setup_searchable_combobox(self.lic_trainee, tr_items, lambda text: self._update_license_trainee_info())
         
         rvps = db.list_unique_rvps()
         rvp_items = [f"{r['rvp_name']} ({r['rvp_rep_code'] or ''})" for r in rvps]
-        setup_searchable_combobox(self.lic_existing_rvp, rvp_items, lambda _: self._on_existing_rvp_select())
+        setup_searchable_combobox(self.lic_existing_rvp, rvp_items, lambda text: self._on_existing_rvp_select())
 
     def _refresh_licenses(self) -> None:
         self.lic_list.clear()
+        search_text = self.lic_search.text().lower()
+        type_filter = self.type_filter.currentText()
+        
+        # Get current RVP filter
+        sel_items = self.rvp_tree.selectedItems()
+        rvp_filter = None
+        if sel_items:
+            data = sel_items[0].data(0, Qt.UserRole)
+            if data != "ALL":
+                rvp_filter = data # (name, rep_code)
+
         for l in db.list_licenses():
+            # Apply RVP Filter
+            if rvp_filter:
+                trainee = db.get_trainee(l['trainee_id'])
+                if not trainee or (trainee['rvp_name'], trainee['rvp_rep_code']) != rvp_filter:
+                    continue
+
+            # Apply Type Filter
+            l_type = l['license_type'] or ""
+            if type_filter != "All Types" and type_filter != l_type:
+                continue
+
+            # Apply Search Filter (Trainee Name or License Number)
+            name_text = f"{l['last_name']}, {l['first_name']}".lower()
+            lnum = (l['license_number'] or "").lower()
+            if search_text and (search_text not in name_text and search_text not in lnum):
+                continue
+
             item_widget = QWidget()
-            layout = QHBoxLayout(item_widget)
-            layout.setContentsMargins(5, 5, 5, 5)
+            # Use a slightly more complex layout for the "Card"
+            main_v = QVBoxLayout(item_widget)
+            main_v.setContentsMargins(15, 12, 15, 12)
+            main_v.setSpacing(6)
             
-            # Label
-            inv = " ($)" if l['invoiced'] else ""
-            ltype = f" [{l['license_type']}]" if l['license_type'] else ""
-            label = QLabel(f"{l['id']}: {l['last_name']}, {l['first_name']} - {l['application_submitted_date'] or '—'}{ltype}{inv}")
-            layout.addWidget(label)
+            top_h = QHBoxLayout()
+            
+            # Trainee Name (Prominent)
+            name_lbl = QLabel(f"<b>{l['last_name']}, {l['first_name']}</b>")
+            name_lbl.setStyleSheet("font-size: 11pt;")
+            top_h.addWidget(name_lbl)
+            
+            top_h.addStretch()
             
             # Status Badge
             status = l['status'] or "Pending"
@@ -208,13 +419,43 @@ class LicenseTab(QWidget):
                 badge_style = BADGE_WARNING
                 
             badge = create_badge(status.upper(), badge_style)
-            layout.addWidget(badge)
-            layout.addStretch()
+            top_h.addWidget(badge)
+            main_v.addLayout(top_h)
+            
+            # Sub-info row (Type, Date, License Number)
+            info_h = QHBoxLayout()
+            info_h.setSpacing(15)
+            
+            type_text = l['license_type'] or "—"
+            type_lbl = QLabel(f"[{type_text}]")
+            type_lbl.setStyleSheet("color: #64748b; font-weight: 600;")
+            info_h.addWidget(type_lbl)
+            
+            date_val = l['application_submitted_date'] or "—"
+            date_lbl = QLabel(f"📅 {date_val}")
+            date_lbl.setStyleSheet("color: #94a3b8; font-size: 9pt;")
+            info_h.addWidget(date_lbl)
+            
+            if l['license_number']:
+                num_lbl = QLabel(f"ID: {l['license_number']}")
+                num_lbl.setStyleSheet("color: #94a3b8; font-size: 9pt;")
+                info_h.addWidget(num_lbl)
+                
+            if l['invoiced']:
+                inv_icon = QLabel("💰")
+                inv_icon.setToolTip("Invoiced")
+                info_h.addWidget(inv_icon)
+                
+            info_h.addStretch()
+            main_v.addLayout(info_h)
             
             list_item = QListWidgetItem(self.lic_list)
+            # Store ID in data for reliable retrieval
+            list_item.setData(Qt.UserRole, l['id'])
             list_item.setSizeHint(item_widget.sizeHint())
             self.lic_list.addItem(list_item)
             self.lic_list.setItemWidget(list_item, item_widget)
+
 
     def _export_licenses(self) -> None:
         path, _ = QFileDialog.getSaveFileName(self, "Export Licenses", "licenses_export.csv", "CSV Files (*.csv)")
@@ -234,7 +475,9 @@ class LicenseTab(QWidget):
     def _edit_license(self) -> None:
         sel = self.lic_list.currentRow()
         if sel < 0: return
-        text = self.lic_list.item(sel).text(); lid = int(text.split(":", 1)[0])
+        item = self.lic_list.item(sel)
+        lid = item.data(Qt.UserRole)
+        if lid is None: return
         lic = db.get_license(lid)
         if not lic: return
         tr = db.get_trainee(lic['trainee_id'])
@@ -309,21 +552,11 @@ class LicenseTab(QWidget):
         if not selected_items:
             return
             
-        # Extract IDs from the labels. This is a bit brittle since labels are complex.
-        # Alternatively, we could store the ID in the item data.
-        # For now, let's parse from the label widget.
         lids = []
         for item in selected_items:
-            widget = self.lic_list.itemWidget(item)
-            if not widget: continue
-            lbl = widget.findChild(QLabel)
-            if lbl:
-                txt = lbl.text()
-                # Label format: "{l['id']}: {l['last_name']}..."
-                try:
-                    lid = int(txt.split(":", 1)[0])
-                    lids.append(lid)
-                except ValueError: continue
+            lid = item.data(Qt.UserRole)
+            if lid is not None:
+                lids.append(lid)
                 
         if not lids: return
         
@@ -339,10 +572,10 @@ class LicenseTab(QWidget):
                 log_and_show_error(self, e, "Error deleting licenses")
 
     def _on_lic_select(self):
-        # This method is connected but its implementation is not provided in the diff.
-        # It's typically used to enable/disable buttons or update details based on selection.
-        # For now, it can remain empty or be implemented as needed.
-        pass
+        # Enable/Disable buttons based on selection
+        sel_count = len(self.lic_list.selectedItems())
+        self.btn_edit.setEnabled(sel_count == 1)
+        self.btn_delete.setEnabled(sel_count > 0)
 
     def _update_license_trainee_info(self):
         t_text = self.lic_trainee.currentText()

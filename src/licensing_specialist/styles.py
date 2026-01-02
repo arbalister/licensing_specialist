@@ -10,7 +10,7 @@ WARNING_COLOR = "#f59e0b"
 TEXT_LIGHT = "#2c3e50"
 TEXT_DARK = "#f1f2f6"
 
-SECTION_HEADER_STYLE = f"font-weight: bold; font-size: 14pt; margin-top: 15px; margin-bottom: 10px; color: {PRIMARY_COLOR};"
+SECTION_HEADER_STYLE = f"font-weight: bold; font-size: 14pt; margin-top: 2px; margin-bottom: 2px; color: {PRIMARY_COLOR};"
 
 # Common QSS fragments
 GLOBAL_STYLES = """
@@ -143,7 +143,7 @@ BADGE_WARNING = f"{BADGE_BASE} background-color: {WARNING_COLOR};"
 BADGE_ERROR = f"{BADGE_BASE} background-color: {ERROR_COLOR};"
 BADGE_INFO = f"{BADGE_BASE} background-color: {PRIMARY_COLOR};"
 
-ACTIVITY_ITEM_STYLE = "border-bottom: 1px solid #4a5568; padding: 12px;" # Need to make this dynamic too?
+ACTIVITY_ITEM_STYLE = "border-bottom: 1px solid #4a5568; padding: 0px;" # Need to make this dynamic too?
 ACTIVITY_TYPE_STYLE = f"font-size: 8pt; font-weight: bold; color: {PRIMARY_COLOR};"
 ACTIVITY_LABEL_STYLE = "font-size: 10pt;"
 ACTIVITY_TIME_STYLE = "font-size: 8pt; color: #94a3b8;"

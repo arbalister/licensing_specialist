@@ -38,10 +38,9 @@ class ActivityItem(QWidget):
         self.setStyleSheet(ACTIVITY_ITEM_STYLE)
         
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(5, 0, 5, 0)
+        layout.setSpacing(0)
         
-        type_label = QLabel(activity_type.upper())
-        type_label.setStyleSheet(ACTIVITY_TYPE_STYLE)
         
         desc_label = QLabel(label)
         desc_label.setStyleSheet(ACTIVITY_LABEL_STYLE)
@@ -51,7 +50,7 @@ class ActivityItem(QWidget):
         time_label.setStyleSheet(ACTIVITY_TIME_STYLE)
         time_label.setAlignment(Qt.AlignRight)
         
-        layout.addWidget(type_label)
+        
         layout.addWidget(desc_label)
         layout.addWidget(time_label)
 
@@ -96,6 +95,7 @@ class DashboardTab(QWidget):
         self.scroll.setFrameShape(QFrame.NoFrame)
         self.activity_list = QWidget()
         self.activity_layout = QVBoxLayout(self.activity_list)
+        self.activity_layout.setSpacing(0)
         self.activity_layout.setAlignment(Qt.AlignTop)
         self.scroll.setWidget(self.activity_list)
         
@@ -151,11 +151,33 @@ class DashboardTab(QWidget):
 
         # 2. Clear and rebuild activity list
         for i in reversed(range(self.activity_layout.count())): 
-            self.activity_layout.itemAt(i).widget().setParent(None)
+            item = self.activity_layout.itemAt(i)
+            if item.widget():
+                item.widget().setParent(None)
 
         activities = services.get_recent_activity()
+        
+        # Group by type
+        grouped = {}
         for act in activities:
-            self.activity_layout.addWidget(ActivityItem(act['type'], act['label'], act['timestamp']))
+            t = act['type']
+            if t not in grouped: grouped[t] = []
+            grouped[t].append(act)
+            
+        # Define display order
+        group_order = ["Exam", "License", "Trainee"]
+        
+        for g_type in group_order:
+            items = grouped.get(g_type, [])
+            if not items: continue
+            
+            # Add Group Header
+            header = QLabel(g_type.upper() + "S")
+            header.setStyleSheet("font-weight: 800; font-size: 8pt; color: #94a3b8; margin-top: 10px; margin-bottom: 2px; padding-left: 5px;")
+            self.activity_layout.addWidget(header)
+            
+            for act in items:
+                self.activity_layout.addWidget(ActivityItem(act['type'], act['label'], act['timestamp']))
 
 def setup_dashboard_tab(main_window):
     tab = DashboardTab(main_window)

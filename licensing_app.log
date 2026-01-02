@@ -827,3 +827,80 @@ RuntimeError: PySide6 GUI is not available: No module named 'PySide6'
 2025-12-23 20:39:42,935 INFO licensing_specialist.db - Starting database migrations...
 2025-12-23 20:41:15,553 INFO licensing_specialist.services - Successfully exported 4 records to /home/chris/python/licensing_specialist/licenses_export.csv
 >>>>>>> 56220566998a0e6fd7d1db57bb5fbb5fac547504
+2026-01-02 13:31:26,288 INFO root - Starting Licensing Specialist GUI
+2026-01-02 13:31:26,360 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 13:31:55,202 INFO root - Starting Licensing Specialist GUI
+2026-01-02 13:31:55,237 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 13:46:20,540 INFO root - Starting Licensing Specialist GUI
+2026-01-02 13:46:20,614 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 13:46:20,826 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 126, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 80, in _build
+    setup_license_tab(self)
+    ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 477, in setup_license_tab
+    tab = LicenseTab(self)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 26, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 67, in _build_ui
+    add_btn.clicked.connect(self._add_license)
+                            ^^^^^^^^^^^^^^^^^
+AttributeError: 'LicenseTab' object has no attribute '_add_license'. Did you mean: '_edit_license'?
+2026-01-02 13:47:45,292 INFO root - Starting Licensing Specialist GUI
+2026-01-02 13:47:45,299 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 13:47:45,532 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+    ~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 126, in main
+    window = MainWindow()
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 36, in __init__
+    self._build()
+    ~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/pyside_gui.py", line 80, in _build
+    setup_license_tab(self)
+    ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 553, in setup_license_tab
+    tab = LicenseTab(self)
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 26, in __init__
+    self._build_ui()
+    ~~~~~~~~~~~~~~^^
+  File "/home/chanlon/code_projects/python/licensing_specialist/src/licensing_specialist/tabs/license_tab.py", line 104, in _build_ui
+    filter_layout.addWidget(_load_icon("search"))
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'PySide6.QtWidgets.QBoxLayout.addWidget' called with wrong argument types:
+  PySide6.QtWidgets.QBoxLayout.addWidget(QIcon)
+Supported signatures:
+  PySide6.QtWidgets.QBoxLayout.addWidget(arg__1: PySide6.QtWidgets.QWidget, /, stretch: int | None = None, alignment: PySide6.QtCore.Qt.AlignmentFlag = Default(Qt.Alignment))
+2026-01-02 13:48:47,240 INFO root - Starting Licensing Specialist GUI
+2026-01-02 13:48:47,251 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 13:52:56,859 INFO root - Starting Licensing Specialist GUI
+2026-01-02 13:52:56,869 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 13:59:24,361 INFO root - Starting Licensing Specialist GUI
+2026-01-02 13:59:24,378 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:03:42,466 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:03:42,480 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:06:59,193 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:06:59,208 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:09:56,645 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:09:56,659 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:12:05,680 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:12:05,696 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:15:16,387 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:15:16,396 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:17:20,556 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:17:20,571 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:19:15,729 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:19:15,739 INFO licensing_specialist.db - Starting database migrations...
+2026-01-02 14:21:46,069 INFO root - Starting Licensing Specialist GUI
+2026-01-02 14:21:46,084 INFO licensing_specialist.db - Starting database migrations...

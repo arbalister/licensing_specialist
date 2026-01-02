@@ -662,6 +662,45 @@ def list_unique_rvps(db_path: Optional[Path] = None) -> List[sqlite3.Row]:
         rows = cur.fetchall()
     return rows
 
+def get_rvp_stats(db_path: Optional[Path] = None) -> List[dict]:
+    """Get license counts (Active/Issued vs Pending) per RVP."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        sql = """
+            SELECT 
+                t.rvp_name, 
+                t.rvp_rep_code,
+                COUNT(l.id) as total_licenses,
+                SUM(CASE WHEN LOWER(l.status) IN ('approved', 'issued', 'active') THEN 1 ELSE 0 END) as issued_count,
+                SUM(CASE WHEN LOWER(l.status) IN ('pending', 'waiting', '') OR l.status IS NULL THEN 1 ELSE 0 END) as pending_count,
+                SUM(CASE WHEN l.invoiced = 1 THEN 1 ELSE 0 END) as invoiced_count
+            FROM trainee t
+            LEFT JOIN license l ON t.id = l.trainee_id
+            WHERE t.rvp_name IS NOT NULL AND t.rvp_name != ''
+            GROUP BY t.rvp_name, t.rvp_rep_code
+            ORDER BY t.rvp_name
+        """
+        cur.execute(sql)
+        rows = cur.fetchall()
+    return [dict(r) for r in rows]
+
+def get_trainees_by_rvp(rvp_name: str, rvp_rep_code: Optional[str] = None, db_path: Optional[Path] = None) -> List[sqlite3.Row]:
+    """List all trainees assigned to a specific RVP."""
+    with get_db_connection(db_path) as conn:
+        cur = conn.cursor()
+        if rvp_rep_code:
+            cur.execute(
+                "SELECT * FROM trainee WHERE rvp_name = ? AND rvp_rep_code = ? ORDER BY last_name, first_name",
+                (rvp_name, rvp_rep_code)
+            )
+        else:
+            cur.execute(
+                "SELECT * FROM trainee WHERE rvp_name = ? AND (rvp_rep_code IS NULL OR rvp_rep_code = '') ORDER BY last_name, first_name",
+                (rvp_name,)
+            )
+        return cur.fetchall()
+
+
 def get_license_info_for_trainee(trainee_id: int, db_path: Optional[Path] = None) -> Optional[dict]:
     """Retrieve license information for a specific trainee."""
     with get_db_connection(db_path) as conn:

@@ -127,7 +127,7 @@ def get_recent_activity(db_path: Optional[Path] = None) -> List[Dict[str, str]]:
         for r in cur.fetchall():
             activities.append({
                 "type": "Trainee",
-                "label": f"New Trainee: {r['first_name']} {r['last_name']}",
+                "label": f"{r['first_name']} {r['last_name']}",
                 "timestamp": "" # IDs don't have timestamps, but sort order works
             })
             
@@ -142,7 +142,7 @@ def get_recent_activity(db_path: Optional[Path] = None) -> List[Dict[str, str]]:
             res = "Passed" if r['passed'] == 1 else "Failed" if r['passed'] == 0 else "Taken"
             activities.append({
                 "type": "Exam",
-                "label": f"{r['last_name']} {res} {r['module']} Exam",
+                "label": f"{r['last_name']} ({r['module']}): {res}",
                 "timestamp": r['exam_date'] or ""
             })
             
@@ -156,7 +156,7 @@ def get_recent_activity(db_path: Optional[Path] = None) -> List[Dict[str, str]]:
         for r in cur.fetchall():
             activities.append({
                 "type": "License",
-                "label": f"License for {r['last_name']}: {r['status']}",
+                "label": f"{r['last_name']}: {r['status']}",
                 "timestamp": r['application_submitted_date'] or ""
             })
             

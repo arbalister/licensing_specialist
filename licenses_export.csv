@@ -1,0 +1,5 @@
+id,trainee_id,application_submitted_date,approval_date,license_number,status,notes,license_type,invoiced,first_name,last_name
+4,7,2026-02-25,2026-03-25,12354,Active,,Life,1,Millie,Vanili
+3,4,2025-03-01,2025-04-15,LIC002,Approved,Second license,,0,Michael,Brown
+2,3,2025-02-20,,,Pending,Under review,,0,Jane,Smith
+1,2,2025-02-15,2025-03-20,LIC001,Approved,First license,,0,John,Doe

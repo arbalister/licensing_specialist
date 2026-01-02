@@ -802,7 +802,28 @@ Supported signatures:
 2025-12-21 20:38:24,619 INFO licensing_specialist.db - Starting database migrations...
 2025-12-21 20:41:34,971 INFO root - Starting Licensing Specialist GUI
 2025-12-21 20:41:35,007 INFO licensing_specialist.db - Starting database migrations...
+<<<<<<< HEAD
 2026-01-02 11:29:45,437 INFO root - Starting Licensing Specialist GUI
 2026-01-02 11:29:45,600 INFO licensing_specialist.db - Starting database migrations...
 2026-01-02 11:31:20,728 INFO root - Starting Licensing Specialist GUI
 2026-01-02 11:31:20,738 INFO licensing_specialist.db - Starting database migrations...
+=======
+2025-12-22 21:28:25,311 INFO root - Starting Licensing Specialist GUI
+2025-12-22 21:28:25,311 ERROR root - Unhandled exception in application
+Traceback (most recent call last):
+  File "/home/chris/python/licensing_specialist/src/licensing_specialist/main.py", line 31, in main
+    run_app()
+  File "/home/chris/python/licensing_specialist/src/licensing_specialist/gui.py", line 17, in run_app
+    raise RuntimeError("PySide6 GUI is not available: " + str(_exc))
+RuntimeError: PySide6 GUI is not available: No module named 'PySide6'
+2025-12-22 21:32:15,784 INFO root - Starting Licensing Specialist GUI
+2025-12-22 21:32:15,990 INFO licensing_specialist.db - Starting database migrations...
+2025-12-22 21:47:05,851 INFO root - Starting Licensing Specialist GUI
+2025-12-22 21:47:05,993 INFO licensing_specialist.db - Starting database migrations...
+2025-12-22 21:50:25,866 INFO licensing_specialist.db - Added record to recruiter with ID 2
+2025-12-22 21:55:30,263 INFO root - Starting Licensing Specialist GUI
+2025-12-22 21:55:30,394 INFO licensing_specialist.db - Starting database migrations...
+2025-12-23 20:39:42,820 INFO root - Starting Licensing Specialist GUI
+2025-12-23 20:39:42,935 INFO licensing_specialist.db - Starting database migrations...
+2025-12-23 20:41:15,553 INFO licensing_specialist.services - Successfully exported 4 records to /home/chris/python/licensing_specialist/licenses_export.csv
+>>>>>>> 56220566998a0e6fd7d1db57bb5fbb5fac547504
